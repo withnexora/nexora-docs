@@ -1,0 +1,35 @@
+---
+title: "PayOS.vn — Setup and operations"
+description: "Server-side PayOS, secret environment variables, signed webhook verification, sandbox and troubleshooting."
+---
+
+NEXORA integrates PayOS **server-side**. The browser receives only a `checkoutUrl`; PayOS credentials are never stored in `site_settings`, bundled into `app.js`, or rendered back by Admin. The Mantis Admin integration panel manages public enablement metadata only; actual credentials belong in the server environment.
+
+## Required environment variables
+
+| Variable | Purpose |
+|---|---|
+| `PAYOS_CLIENT_ID` | PayOS application client ID |
+| `PAYOS_API_KEY` | API key used to create payment links |
+| `PAYOS_CHECKSUM_KEY` | Checksum key used to verify webhook signatures |
+| `SUPABASE_URL` | Server-side Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server key used to update orders after a verified webhook; never expose it to the browser |
+| `PUBLIC_SITE_URL` | Public HTTPS URL used for `returnUrl` and `cancelUrl` |
+
+Store these values in the Express/Autoscale secrets manager or the hosting provider’s secret store. Never commit `.env`, include secrets in screenshots, or paste them into public Admin settings.
+
+## Payment flow
+
+A customer creates a `pending_payment` order and selects **PayOS**. The storefront sends the `orderId` with the Supabase access token to `POST /api/payments/payos/create`. The server verifies ownership, confirms that the order is still pending, creates a payment link through `@payos/node`, records `payment_method = payos`, and redirects the browser to the returned `checkoutUrl`.
+
+PayOS calls `POST /api/payments/payos/webhook`. The server verifies the payload with the Checksum key, extracts the order number from the description, compares the amount with `orders.total_amount`, and only then marks the order as `paid`. Processing is idempotent: already paid, processing, or completed orders do not increase revenue twice. A browser redirect is never treated as proof of payment.
+
+## Webhook setup
+
+In the PayOS dashboard, set the webhook URL to `https://YOUR_DOMAIN/api/payments/payos/webhook`. Use the real public HTTPS domain in production, not `localhost`. The server derives return and cancel URLs from `PUBLIC_SITE_URL`.
+
+After secrets are entered, check `GET /api/payments/payos/status`, sign in to the storefront, create a small sandbox order, select PayOS, and verify: a checkout URL is created, the webhook returns HTTP 200, and Command Deck revenue increases only after `orders.status` becomes `paid`.
+
+## Troubleshooting
+
+If the storefront says PayOS is not configured, one of the PayOS credentials or the server-side Supabase credentials is missing. If checkout creation succeeds but the order does not update, check the HTTPS webhook URL, firewall, Checksum key, and server logs. Do not manually set `paid` with SQL without reconciling the transaction in PayOS. Amount mismatches are rejected deliberately to protect the order.

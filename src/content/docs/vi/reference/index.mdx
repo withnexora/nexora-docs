@@ -1,0 +1,59 @@
+---
+title: "Tài liệu tham chiếu"
+description: "Các hướng dẫn chi tiết, ghi chú kỹ thuật và kết quả kiểm thử của NEXORA."
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Điểm bắt đầu để tra cứu mã nguồn, vận hành cửa hàng và khôi phục hạ tầng. Tài liệu được nhóm theo **mục đích sử dụng**.
+
+## Hướng dẫn đầy đủ
+
+<CardGrid>
+  <LinkCard title="Hướng dẫn triển khai & sử dụng A–Z" description="Từ clone, Supabase, admin, QR/Zalo, role, media đến GitHub, aaPanel, cPanel, static hosting và checklist production." href="/vi/reference/guide-a-z/" />
+  <LinkCard title="Deployment & user guide (tiếng Anh)" description="Bản hướng dẫn triển khai và sử dụng bằng tiếng Anh: local, Supabase, hosting, role, thanh toán, email." href="/vi/reference/deployment-guide/" />
+  <LinkCard title="SMTP & email giao dịch" description="Cài đặt SMTP hoặc Resend API, domain/DNS, biến môi trường, reset password, aaPanel, cPanel và bảo mật." href="/vi/reference/smtp-setup/" />
+  <LinkCard title="PayOS.vn — Cấu hình và vận hành" description="PayOS server-side, secret environment, webhook xác minh chữ ký, sandbox và xử lý sự cố." href="/vi/reference/payos-setup/" />
+  <LinkCard title="Cấu hình Environment trên Render" description="Blueprint Web Service, Build/Start command, /healthz, biến VITE_*, Supabase, PayOS và troubleshooting." href="/vi/reference/render-env/" />
+  <LinkCard title="Cấu hình Supabase Storage" description="Tạo bucket nexora-brand-assets, policy upload theo capability, kiểm thử public URL và cấu hình Render." href="/vi/reference/supabase-storage/" />
+</CardGrid>
+
+## Hệ thống & vận hành
+
+<CardGrid>
+  <LinkCard title="Quy trình Supabase" description="Schema canonical 25 bảng, RLS, quy trình áp dụng một lần, xác minh, checkout và cấp quyền admin an toàn." href="/vi/reference/supabase-workflow/" />
+  <LinkCard title="Tài khoản, số dư & nạp tiền Zalo" description="Sổ cái, nạp tiền Zalo, quản trị khách, RLS và quy trình đối soát." href="/vi/reference/account-wallet/" />
+  <LinkCard title="Role, kiểm duyệt, affiliate & hoàn tiền" description="Ma trận role, moderation, article reader, referral 15%, hoàn tiền, CSV và mapping sản phẩm–gian hàng." href="/vi/reference/role-content-affiliate/" />
+  <LinkCard title="Mantis Admin variant" description="Dashboard Bootstrap/Mantis riêng, dùng chung Auth/Supabase và không thay thế Command Deck." href="/vi/reference/mantis-admin/" />
+  <LinkCard title="Hệ thống “Ghi sau”" description="Quy ước ghi nhận yêu cầu trì hoãn, trạng thái backlog, capability deferredWork và RLS." href="/vi/reference/deferred-work/" />
+  <LinkCard title="CK tự động đa nhà cung cấp" description="Ghi chú kỹ thuật về chuyển khoản tự động qua nhiều nhà cung cấp." href="/vi/reference/auto-transfer-providers/" />
+</CardGrid>
+
+## Kiểm thử & ghi chú
+
+<CardGrid>
+  <LinkCard title="Xác minh mobile & email URL" description="Kết quả kiểm tra mobile và liên kết email trước phát hành." href="/vi/reference/mobile-email-verification/" />
+  <LinkCard title="Ghi nhận kiểm tra giao diện" description="Ghi nhận kiểm tra Command Deck và các luồng chính trước phát hành." href="/vi/reference/verification-notes/" />
+  <LinkCard title="Lỗi thường gặp" description="Cách xử lý các lỗi nguy hiểm thường gặp." href="/vi/reference/known-errors/" />
+  <LinkCard title="Phạm vi mở rộng tính năng" description="Phạm vi mở rộng role, nội dung và vận hành." href="/vi/reference/feature-expansion-scope/" />
+  <LinkCard title="Quy ước schema SQL" description="Repository chỉ giữ một schema canonical duy nhất." href="/vi/reference/legacy-migrations/" />
+</CardGrid>
+
+## Nguồn chuẩn
+
+| Thành phần | Nguồn chuẩn |
+| --- | --- |
+| Schema Supabase | [`supabase-unified.sql`](https://github.com/withnexora/nexora/blob/main/supabase-unified.sql) |
+| Media gốc | `client/public/media/` (branch `main`); [`assets/media`](https://github.com/withnexora/nexora/tree/assets/media) là bản backup |
+| Mã ứng dụng và tài liệu | Nhánh GitHub `main` |
+
+## Tài liệu trong repository
+
+- [README](https://github.com/withnexora/nexora/blob/main/README.md) · [README (EN)](https://github.com/withnexora/nexora/blob/main/README_EN.md)
+- [ADMIN_SETUP](https://github.com/withnexora/nexora/blob/main/ADMIN_SETUP.md) — cấp quyền Command Deck
+- [ASSET_MANIFEST](https://github.com/withnexora/nexora/blob/main/ASSET_MANIFEST.md) — kiểm kê media và checksum
+- [ideas.md](https://github.com/withnexora/nexora/blob/main/ideas.md) · [todo.md](https://github.com/withnexora/nexora/blob/main/todo.md)
+
+:::caution[Pháp lý]
+Các trang điều khoản, bảo mật, giao hàng/đổi trả trong CMS là nội dung khởi tạo. Chủ sở hữu cần **rà soát pháp lý độc lập** trước khi công bố cho khách hàng thực.
+:::

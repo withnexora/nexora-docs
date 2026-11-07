@@ -1,0 +1,12 @@
+---
+title: "Supabase Storage setup"
+description: "Create the nexora-brand-assets bucket, capability-based upload policies and verify public URLs."
+---
+
+:::note
+This is the English summary. The full step-by-step guide is written in Vietnamese: [open the full guide](/vi/reference/supabase-storage/).
+:::
+
+NEXORA already uploads Admin images to the `nexora-brand-assets` Supabase Storage bucket. Apply `supabase-unified.sql`, keep the bucket public for storefront images, and preserve the role-based `storage.objects` insert policies. Use the Supabase publishable/anon key in the browser, never the Service Role Key. New CMS URLs should use `/storage/v1/object/public/nexora-brand-assets/...` instead of `/manus-storage/...`.
+
+The existing upload code is in `client/admin.js` and `client/account-center.js`; no frontend code change is required when the bucket and policies are configured correctly.

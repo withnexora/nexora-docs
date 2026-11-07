@@ -1,0 +1,24 @@
+---
+title: "Render environment configuration"
+description: "Render Web Service checklist: build/start commands, health check, VITE_* variables, Supabase and PayOS."
+---
+
+:::note
+This is the English summary. The full step-by-step guide is written in Vietnamese: [open the full guide](/vi/reference/render-env/).
+:::
+
+1. Deploy as a Render **Web Service**.
+2. Use `corepack enable && pnpm install --frozen-lockfile && pnpm build` as the build command.
+3. Use `pnpm start` as the start command.
+4. Set health check path to `/healthz`.
+5. Set `NODE_ENV=production` and keep `JWT_SECRET` server-only.
+6. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` for the browser build.
+7. Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` only for backend/payment features.
+8. Add PayOS secrets only when PayOS production is ready.
+9. Redeploy after every change to a `VITE_*` variable.
+
+## References
+
+[1]: https://render.com/docs/web-services "Render Web Services"
+[2]: https://render.com/docs/configure-environment-variables "Render Environment Variables and Secrets"
+[3]: https://render.com/docs/blueprint-spec "Render Blueprint YAML Reference"

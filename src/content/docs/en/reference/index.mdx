@@ -1,0 +1,59 @@
+---
+title: "Reference"
+description: "Detailed guides, technical notes and verification results for NEXORA."
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Start here to look up the codebase, operate the store and recover infrastructure. Pages are grouped by **purpose**.
+
+## Full guides
+
+<CardGrid>
+  <LinkCard title="Hướng dẫn triển khai & sử dụng A–Z" description="Từ clone, Supabase, admin, QR/Zalo, role, media đến GitHub, aaPanel, cPanel, static hosting và checklist production. (VI)" href="/en/reference/guide-a-z/" />
+  <LinkCard title="Deployment & user guide" description="Local setup, Supabase, GitHub Pages, static hosting, aaPanel, cPanel, roles, payments, email and troubleshooting." href="/en/reference/deployment-guide/" />
+  <LinkCard title="SMTP & transactional email" description="Configure SMTP or the Resend API, domain/DNS, environment variables, password reset, aaPanel, cPanel and security." href="/en/reference/smtp-setup/" />
+  <LinkCard title="PayOS.vn — Setup and operations" description="Server-side PayOS, secret environment variables, signed webhook verification, sandbox and troubleshooting." href="/en/reference/payos-setup/" />
+  <LinkCard title="Render environment configuration" description="Render Web Service checklist: build/start commands, health check, VITE_* variables, Supabase and PayOS." href="/en/reference/render-env/" />
+  <LinkCard title="Supabase Storage setup" description="Create the nexora-brand-assets bucket, capability-based upload policies and verify public URLs." href="/en/reference/supabase-storage/" />
+</CardGrid>
+
+## Systems & operations
+
+<CardGrid>
+  <LinkCard title="Quy trình Supabase" description="Schema canonical 25 bảng, RLS, quy trình áp dụng một lần, xác minh, checkout và cấp quyền admin an toàn. (VI)" href="/en/reference/supabase-workflow/" />
+  <LinkCard title="Tài khoản, số dư & nạp tiền Zalo" description="Sổ cái, nạp tiền Zalo, quản trị khách, RLS và quy trình đối soát. (VI)" href="/en/reference/account-wallet/" />
+  <LinkCard title="Role, kiểm duyệt, affiliate & hoàn tiền" description="Ma trận role, moderation, article reader, referral 15%, hoàn tiền, CSV và mapping sản phẩm–gian hàng. (VI)" href="/en/reference/role-content-affiliate/" />
+  <LinkCard title="Mantis Admin variant" description="Standalone Bootstrap/Mantis dashboard sharing Auth/Supabase; does not replace the Command Deck." href="/en/reference/mantis-admin/" />
+  <LinkCard title="Deferred work backlog" description="Conventions for recording deferred requests, backlog statuses, the deferredWork capability and RLS." href="/en/reference/deferred-work/" />
+  <LinkCard title="CK tự động đa nhà cung cấp" description="Ghi chú kỹ thuật về chuyển khoản tự động qua nhiều nhà cung cấp. (VI)" href="/en/reference/auto-transfer-providers/" />
+</CardGrid>
+
+## QA & notes
+
+<CardGrid>
+  <LinkCard title="Xác minh mobile & email URL" description="Kết quả kiểm tra mobile và liên kết email trước phát hành. (VI)" href="/en/reference/mobile-email-verification/" />
+  <LinkCard title="Ghi nhận kiểm tra giao diện" description="Ghi nhận kiểm tra Command Deck và các luồng chính trước phát hành. (VI)" href="/en/reference/verification-notes/" />
+  <LinkCard title="Known errors" description="How to fix common critical errors." href="/en/reference/known-errors/" />
+  <LinkCard title="Phạm vi mở rộng tính năng" description="Phạm vi mở rộng role, nội dung và vận hành. (VI)" href="/en/reference/feature-expansion-scope/" />
+  <LinkCard title="Quy ước schema SQL" description="Repository chỉ giữ một schema canonical duy nhất. (VI)" href="/en/reference/legacy-migrations/" />
+</CardGrid>
+
+## Sources of truth
+
+| Component | Source |
+| --- | --- |
+| Schema Supabase | [`supabase-unified.sql`](https://github.com/withnexora/nexora/blob/main/supabase-unified.sql) |
+| Original media | `client/public/media/` (branch `main`); [`assets/media`](https://github.com/withnexora/nexora/tree/assets/media) is the backup |
+| App code and docs | GitHub branch `main` |
+
+## Repository documents
+
+- [README](https://github.com/withnexora/nexora/blob/main/README.md) · [README (EN)](https://github.com/withnexora/nexora/blob/main/README_EN.md)
+- [ADMIN_SETUP](https://github.com/withnexora/nexora/blob/main/ADMIN_SETUP.md) — granting Command Deck access
+- [ASSET_MANIFEST](https://github.com/withnexora/nexora/blob/main/ASSET_MANIFEST.md) — media inventory and checksums
+- [ideas.md](https://github.com/withnexora/nexora/blob/main/ideas.md) · [todo.md](https://github.com/withnexora/nexora/blob/main/todo.md)
+
+:::caution[Legal]
+The terms, privacy and shipping/returns pages in the CMS are starter content. The owner needs an **independent legal review** before publishing to real customers.
+:::

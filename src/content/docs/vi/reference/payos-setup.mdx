@@ -1,0 +1,35 @@
+---
+title: "PayOS.vn — Cấu hình và vận hành"
+description: "PayOS server-side, secret environment, webhook xác minh chữ ký, sandbox và xử lý sự cố."
+---
+
+NEXORA tích hợp PayOS ở **server-side**. Trình duyệt chỉ nhận `checkoutUrl`; các credential PayOS không được lưu trong `site_settings`, không được đưa vào `app.js` và không được hiển thị lại trong Admin. Mantis Admin chỉ cho phép bật/tắt trạng thái hiển thị và ghi nhận rằng PayOS cần được cấu hình ở môi trường server.
+
+## Biến môi trường bắt buộc
+
+| Biến | Mục đích |
+|---|---|
+| `PAYOS_CLIENT_ID` | Client ID của ứng dụng PayOS |
+| `PAYOS_API_KEY` | API key dùng để tạo payment link |
+| `PAYOS_CHECKSUM_KEY` | Checksum key dùng để xác thực chữ ký webhook |
+| `SUPABASE_URL` | URL project Supabase phía server |
+| `SUPABASE_SERVICE_ROLE_KEY` | Key server để cập nhật đơn sau webhook; tuyệt đối không đưa vào frontend |
+| `PUBLIC_SITE_URL` | URL public, ví dụ `https://nexorashop-gpjdasbm.manus.space`, dùng cho `returnUrl` và `cancelUrl` |
+
+Đặt các biến trên trong Secrets của môi trường chạy Express/Autoscale hoặc trong secret manager của hosting. Không commit `.env`, không chụp màn hình giá trị secret và không nhập các secret này vào ô cấu hình public của Admin.
+
+## Luồng thanh toán
+
+Khách tạo đơn ở trạng thái `pending_payment`, chọn **PayOS**, sau đó storefront gửi `orderId` kèm Supabase access token tới `POST /api/payments/payos/create`. Server xác minh user sở hữu đơn, kiểm tra đơn còn chờ thanh toán, tạo payment link bằng SDK `@payos/node`, lưu `payment_method = payos` và chuyển trình duyệt tới `checkoutUrl`.
+
+PayOS gọi `POST /api/payments/payos/webhook`. Server xác thực payload bằng Checksum key, trích mã đơn từ phần mô tả, đối chiếu số tiền với `orders.total_amount`, rồi mới cập nhật đơn thành `paid`. Webhook được xử lý idempotent: đơn đã `paid`, `processing` hoặc `completed` sẽ không bị cộng doanh thu lần hai. Không đánh dấu thanh toán chỉ dựa vào redirect của trình duyệt.
+
+## Cấu hình webhook trong PayOS
+
+Trong trang quản trị PayOS, đặt webhook URL là `https://YOUR_DOMAIN/api/payments/payos/webhook`. `YOUR_DOMAIN` phải là domain HTTPS public đang chạy NEXORA; không dùng `localhost` trong production. `returnUrl` và `cancelUrl` được server tạo từ `PUBLIC_SITE_URL`.
+
+Sau khi nhập secret, kiểm tra lần lượt `GET /api/payments/payos/status`, đăng nhập storefront, tạo một đơn giá trị nhỏ trong sandbox, chọn PayOS và kiểm tra ba điểm: PayOS tạo được checkout URL, webhook trả về HTTP 200, và Command Deck chỉ tăng doanh thu sau khi `orders.status` chuyển thành `paid`.
+
+## Xử lý sự cố
+
+Nếu storefront báo “PayOS chưa được cấu hình”, một trong ba secret PayOS hoặc secret Supabase server đang thiếu. Nếu tạo link thành công nhưng webhook không cập nhật đơn, kiểm tra URL HTTPS, firewall, chữ ký Checksum key và log server; không tự sửa trạng thái `paid` bằng SQL nếu chưa đối chiếu giao dịch trên PayOS. Nếu số tiền không khớp, webhook bị từ chối để bảo vệ đơn hàng.

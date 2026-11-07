@@ -1,0 +1,115 @@
+/* NEXORA theme — Circuit Atelier: cyan + violet trên nền tối */
+
+:root {
+  --nx-cyan: #06d6e8;
+  --nx-violet: #8b3dff;
+  --sl-font-system: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --sl-content-width: 50rem;
+  --sl-sidebar-width: 18.5rem;
+  --nx-radius: 0.75rem;
+}
+
+/* Dark (mặc định của thương hiệu) */
+:root,
+:root[data-theme='dark'] {
+  --sl-color-accent-low: #2a1459;
+  --sl-color-accent: #7c3aed;
+  --sl-color-accent-high: #67e8f9;
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: #eceef5;
+  --sl-color-gray-2: #c3c7d6;
+  --sl-color-gray-3: #8e93a8;
+  --sl-color-gray-4: #5a5f78;
+  --sl-color-gray-5: #323650;
+  --sl-color-gray-6: #1d2036;
+  --sl-color-black: #11131f;
+}
+
+/* Light */
+:root[data-theme='light'] {
+  --sl-color-accent-low: #e5d9ff;
+  --sl-color-accent: #6d28d9;
+  --sl-color-accent-high: #4c1d95;
+  --sl-color-white: #11131f;
+  --sl-color-gray-1: #20233a;
+  --sl-color-gray-2: #3a3e5a;
+  --sl-color-gray-3: #5a5f78;
+  --sl-color-gray-4: #8e93a8;
+  --sl-color-gray-5: #c9ccdb;
+  --sl-color-gray-6: #eef0f7;
+  --sl-color-gray-7: #f6f7fb;
+  --sl-color-black: #ffffff;
+}
+
+/* Hero (splash) */
+[data-has-hero] .hero {
+  padding-block: clamp(2rem, 6vw, 4.5rem);
+}
+[data-has-hero] .hero h1 {
+  background: linear-gradient(100deg, var(--nx-cyan), var(--nx-violet));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.02em;
+}
+[data-has-hero] .hero img {
+  filter: drop-shadow(0 0 2.5rem color-mix(in srgb, var(--nx-cyan) 45%, transparent));
+}
+[data-has-hero] .sl-container {
+  position: relative;
+}
+:root[data-theme='dark'] [data-has-hero] .main-frame::before,
+:root:not([data-theme]) [data-has-hero] .main-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 28rem;
+  z-index: -1;
+  background:
+    radial-gradient(40rem 18rem at 15% 0%, color-mix(in srgb, var(--nx-cyan) 16%, transparent), transparent 70%),
+    radial-gradient(40rem 18rem at 85% 0%, color-mix(in srgb, var(--nx-violet) 22%, transparent), transparent 70%);
+  pointer-events: none;
+}
+
+/* Cards */
+.sl-markdown-content .card {
+  border-radius: var(--nx-radius);
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.sl-markdown-content .card:hover {
+  transform: translateY(-2px);
+  border-color: var(--nx-violet);
+  box-shadow: 0 0.5rem 1.5rem -0.75rem color-mix(in srgb, var(--nx-violet) 55%, transparent);
+}
+.sl-link-card {
+  border-radius: var(--nx-radius);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.sl-link-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--nx-cyan);
+}
+
+
+/* Bảng, code, ảnh */
+.sl-markdown-content table {
+  display: block;
+  overflow-x: auto;
+  border-radius: var(--nx-radius);
+}
+.sl-markdown-content img {
+  border-radius: var(--nx-radius);
+  border: 1px solid var(--sl-color-hairline);
+}
+.sl-markdown-content :not(pre) > code {
+  border-radius: 0.35rem;
+}
+.expressive-code {
+  --ec-brdRad: 0.7rem;
+}
+
+/* Sidebar: nhóm rõ ràng hơn */
+.sidebar-content details > summary .large {
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}

@@ -1,0 +1,31 @@
+---
+title: "Mantis Admin variant"
+description: "Standalone Bootstrap/Mantis dashboard sharing Auth/Supabase; does not replace the Command Deck."
+---
+
+Mantis Admin is a separate, optional administration surface. It does not replace `admin.html` or `admin-en.html`. Open it at `/admin-mantis.html`; the live URL is `https://nexorashop-gpjdasbm.manus.space/admin-mantis.html`. The page follows the Mantis Bootstrap layout pattern with a sidebar, topbar, cards, and responsive navigation drawer, while remaining a standalone NEXORA entrypoint.
+
+The page uses the same Supabase Auth session, `client/supabase-config.js`, `can_access_command_deck` RPC, `is_admin` RPC, existing role model, and NEXORA RLS policies. It does not grant roles, create administrator accounts, or contain a service-role key. Accounts without Command Deck access are denied.
+
+The dashboard reads real Supabase data for confirmed revenue, total orders, product count, visible customer profiles, and the current role. The Overview includes a seven-day revenue chart and a six-row latest-orders table. The sidebar includes Product management and User management views; full CRUD and account actions continue in `/admin-en.html`, which contains product CRUD, order operations, CMS, roles, notifications, sale campaigns, and other management modules. Mantis Admin is therefore a dashboard and quick-launch surface, not a replacement for the existing Command Deck.
+
+The topbar language control switches between English and Vietnamese and persists the choice in local storage. The theme control switches between Light and Dark Mode and also persists locally; non-essential motion respects `prefers-reduced-motion`. Metrics and lists use real data within the current account's RLS scope and do not create demo data.
+
+## How to use it
+
+1. Sign in with an account that has an appropriate NEXORA role.
+2. Use the sidebar to open Overview, Catalog snapshot, Order operations, or Access & links.
+3. Select Full English Admin when you need to edit real data.
+4. Select Sign out when finished, especially on a shared computer.
+
+## Argon Admin variant
+
+Argon Admin is available at `/admin-argon.html` as a separate optional surface based on the [Argon Dashboard](https://github.com/creativetimofficial/argon-dashboard) layout reference. It shares Supabase Auth, RLS, dashboard metrics, language and theme controls, but does not replace `admin.html`, `admin-en.html`, or `admin-mantis.html`. Its currency selector supports VND, USD, EUR, GBP, JPY, CNY, KRW, SGD, THB, AUD and CAD for dashboard display. NEXORA payment amounts should still be confirmed in VND until a multi-currency payment provider is configured.
+
+## Tawk, warning banner and international payments
+
+The **Integrations** panel can enable Tawk.to with public Property ID and Widget ID, configure a bilingual storefront warning banner with level/color controls, and manage PayPal, Wise, Alipay, Apple Pay and Google Pay readiness. Secret keys are not entered into the browser, and automatic processing remains locked until server secrets, a webhook and signature verification are configured. Existing manual methods are unchanged.
+
+## License and assets
+
+The reference repository is [Mantis Free Bootstrap Admin Template](https://github.com/codedthemes/mantis-free-bootstrap-admin-template), released under the MIT License. NEXORA uses the layout pattern and Bootstrap CDN for this variant; it does not copy the repository build assets into the storefront. The license notice is retained in `client/admin-mantis.html` and the page footer.

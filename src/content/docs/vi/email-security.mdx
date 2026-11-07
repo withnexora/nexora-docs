@@ -1,0 +1,16 @@
+---
+title: "Email và bảo mật"
+description: "SMTP, Resend, recovery password và quy tắc bảo mật production."
+---
+
+Có thể dùng SMTP hoặc Resend API cho email giao dịch và recovery password. Cấu hình sender domain với SPF, DKIM và DMARC; không đưa password vào Admin form hoặc Git.
+
+## Secrets
+
+Secrets như SMTP password, Resend key, PayOS key, service role và JWT secret chỉ ở Render/aaPanel/server environment. Frontend chỉ nhận public Supabase config.
+
+## Recovery
+
+Cấu hình redirect URL local, preview và production trong Supabase Auth. Kiểm thử email reset trên domain HTTPS trước khi công bố.
+
+Xem [SMTP_SETUP_BILINGUAL.md](/vi/reference/smtp-setup/) và [RENDER_ENV_SETUP_BILINGUAL.md](/vi/reference/render-env/).

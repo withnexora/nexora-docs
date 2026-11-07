@@ -1,0 +1,31 @@
+---
+title: "Mantis Admin variant"
+description: "Dashboard Bootstrap/Mantis riêng, dùng chung Auth/Supabase và không thay thế Command Deck."
+---
+
+Mantis Admin là giao diện quản trị phụ, độc lập với `admin.html` và `admin-en.html`. Mở giao diện tại `/admin-mantis.html`; bản online là `https://nexorashop-gpjdasbm.manus.space/admin-mantis.html`. Giao diện này dùng bố cục sidebar, topbar, card và responsive drawer theo phong cách Mantis Bootstrap, nhưng được viết thành entrypoint riêng trong NEXORA.
+
+Mantis Admin sử dụng cùng Supabase Auth, `client/supabase-config.js`, RPC `can_access_command_deck`, RPC `is_admin`, bảng role hiện có và RLS của NEXORA. Người dùng phải có quyền truy cập Command Deck; trang không cấp quyền, không tạo tài khoản Admin và không chứa service-role key. Nếu tài khoản không đủ quyền, trang sẽ từ chối truy cập.
+
+Dashboard Mantis hiển thị số liệu thực từ Supabase như doanh thu các đơn đã xác nhận, tổng đơn, số sản phẩm, số hồ sơ người dùng và role hiện tại. Overview có biểu đồ doanh thu 7 ngày và bảng 6 đơn hàng mới nhất. Sidebar có các mục quản lý sản phẩm và người dùng; đây là các trang tổng quan/điểm mở nhanh, còn CRUD và thao tác tài khoản đầy đủ mở trong `/admin-en.html`. Vì vậy Mantis Admin là dashboard/quick-launch phụ, không thay thế luồng quản trị hiện tại.
+
+Nút chuyển ngôn ngữ trên topbar đổi giữa English và Tiếng Việt, lưu lựa chọn trong trình duyệt. Nút theme đổi giữa Light và Dark Mode, cũng lưu lựa chọn cục bộ; giao diện vẫn tôn trọng `prefers-reduced-motion`. Các số liệu và danh sách đều dùng dữ liệu thật theo phạm vi RLS của tài khoản hiện tại, không tạo dữ liệu mẫu.
+
+## Cách sử dụng
+
+1. Đăng nhập bằng tài khoản đã được cấp role phù hợp.
+2. Dùng sidebar để xem Overview, Catalog snapshot, Order operations hoặc Access & links.
+3. Chọn Full English Admin để thực hiện chỉnh sửa dữ liệu thật.
+4. Dùng Sign out khi kết thúc phiên, đặc biệt trên máy dùng chung.
+
+## Argon Admin phụ
+
+Argon Admin mở tại `/admin-argon.html` và là variant phụ độc lập dựa trên layout tham khảo của [Argon Dashboard](https://github.com/creativetimofficial/argon-dashboard). Variant này dùng chung Supabase Auth, RLS, dashboard metrics và bộ chọn ngôn ngữ/theme; không thay thế `admin.html`, `admin-en.html` hoặc `admin-mantis.html`. Bộ chọn tiền tệ hỗ trợ VND, USD, EUR, GBP, JPY, CNY, KRW, SGD, THB, AUD và CAD cho mục đích hiển thị dashboard. Giá trị thanh toán gốc của NEXORA vẫn cần được xác nhận theo VND cho đến khi cấu hình cổng thanh toán đa tiền tệ hoàn tất.
+
+## Tawk, banner và thanh toán quốc tế
+
+Panel **Tích hợp** cho phép bật Tawk.to bằng Property ID và Widget ID công khai, tạo banner cảnh báo song ngữ với mức độ/màu tùy chỉnh, và quản lý trạng thái các phương thức PayPal, Wise, Alipay, Apple Pay và Google Pay. Secret key không nhập vào browser và trạng thái tự động vẫn bị khóa cho tới khi có secret server, webhook và xác minh chữ ký. Các phương thức thủ công hiện tại không bị thay đổi.
+
+## License và tài sản
+
+Repository tham khảo là [Mantis Free Bootstrap Admin Template](https://github.com/codedthemes/mantis-free-bootstrap-admin-template), được phát hành theo MIT License. NEXORA chỉ sử dụng pattern bố cục và Bootstrap CDN trong variant này; không đưa asset build của repository vào storefront. Thông báo license được giữ trong `client/admin-mantis.html` và footer của trang.

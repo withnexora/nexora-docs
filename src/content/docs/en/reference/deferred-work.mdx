@@ -1,0 +1,27 @@
+---
+title: "Deferred work backlog"
+description: "Conventions for recording deferred requests, backlog statuses, the deferredWork capability and RLS."
+---
+
+The **Deferred Work** system turns requests that should not be implemented immediately into a traceable backlog. When a user says “do this later”, “save this for later”, “defer this”, or uses equivalent wording, the request is stored in `deferred_work_items` rather than silently dropped or implemented automatically.
+
+In Command Deck, open **Ghi sau / Backlog** to search, filter by status or priority, create items, edit details, set due dates, and archive work. Supported statuses are `backlog`, `in_progress`, `blocked`, `completed`, and `archived`. An item can only be marked `completed` when `completed_at` and `completed_by` are present; archiving preserves the audit history.
+
+Access is controlled by the `deferredWork` capability. In the current NEXORA configuration, `admin`, `moderator`, and `marketing` receive this capability; Supabase RLS prevents unauthorized accounts from reading or changing the backlog. Never place passwords, tokens, API keys, checksum keys, or payment secrets in `source_message`.
+
+When the user asks to continue a deferred item, move it to `in_progress`, follow the normal implementation plan, run tests, and mark it `completed` only after verification succeeds. If a secret, migration, or permission is missing, use `blocked` and record the reason instead of claiming completion.
+
+
+## Cấu trúc dữ liệu / Data model
+
+| Trường / Field | Giá trị / Values |
+| --- | --- |
+| `category` | `general`, `feature`, `bug`, `content`, `operations`, `payment`, `documentation` |
+| `priority` | `urgent`, `high`, `normal`, `low` |
+| `status` | `backlog`, `in_progress`, `blocked`, `completed`, `archived` |
+| `source` | Nguồn yêu cầu, thường là `chat` / Request source, usually `chat` |
+| `source_message` | Nội dung gốc đã loại bỏ dữ liệu nhạy cảm / Sanitized source request |
+
+:::tip
+“Ghi sau” trì hoãn triển khai, không trì hoãn việc ghi nhận. / Deferring implementation does not mean dropping the request.
+:::
