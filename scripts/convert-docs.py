@@ -8,7 +8,7 @@ from pathlib import Path
 
 SRC = Path(sys.argv[1] if len(sys.argv) > 1 else 'docs')
 OUT = Path(sys.argv[2] if len(sys.argv) > 2 else 'src/content/docs')
-GH = 'https://github.com/minhduc290613/tech-ecommerce-store/blob/main/'
+GH = 'https://github.com/withnexora/nexora/blob/main/'
 
 # ---------- Metadata các trang tham chiếu ----------
 # mode: vi | en | both | split(vi/en theo mục) | tail(vi đầy đủ + en chỉ phần English)
@@ -302,7 +302,7 @@ for loc in ('vi', 'en'):
     out += [f'## {"Nguồn chuẩn" if vi else "Sources of truth"}', '',
             '| ' + ('Thành phần | Nguồn chuẩn' if vi else 'Component | Source') + ' |', '| --- | --- |',
             f'| Schema Supabase | [`supabase-unified.sql`]({GH}supabase-unified.sql) |',
-            f'| {"Media gốc" if vi else "Original media"} | `client/public/media/` (branch `main`); [`assets/media`](https://github.com/minhduc290613/tech-ecommerce-store/tree/assets/media) {"là bản backup" if vi else "is the backup"} |',
+            f'| {"Media gốc" if vi else "Original media"} | `client/public/media/` (branch `main`); [`assets/media`](https://github.com/withnexora/nexora/tree/assets/media) {"là bản backup" if vi else "is the backup"} |',
             f'| {"Mã ứng dụng và tài liệu" if vi else "App code and docs"} | {"Nhánh GitHub" if vi else "GitHub branch"} `main` |', '',
             f'## {"Tài liệu trong repository" if vi else "Repository documents"}', '',
             f'- [README]({GH}README.md) · [README (EN)]({GH}README_EN.md)',

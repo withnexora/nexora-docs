@@ -24,11 +24,11 @@ export default defineConfig({
         {
           icon: 'github',
           label: 'GitHub',
-          href: 'https://github.com/minhduc290613/tech-ecommerce-store',
+          href: 'https://github.com/withnexora/nexora',
         },
       ],
       editLink: {
-        baseUrl: 'https://github.com/minhduc290613/tech-ecommerce-store/edit/main/docs-site/',
+        baseUrl: 'https://github.com/withnexora/nexora-docs/edit/main/docs-site/',
       },
       lastUpdated: true,
       head: [

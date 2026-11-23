@@ -52,7 +52,7 @@ If Supabase email confirmation is enabled in the future, configure redirect URLs
 
 | Database state | File to use |
 | --- | --- |
-| New/empty Supabase project | [`../supabase-unified.sql`](https://github.com/minhduc290613/tech-ecommerce-store/blob/main/supabase-unified.sql). |
+| New/empty Supabase project | [`../supabase-unified.sql`](https://github.com/withnexora/nexora/blob/main/supabase-unified.sql). |
 | NEXORA project with the canonical schema | Use managed DDL changes generated from `supabase-unified.sql`; the repository no longer keeps standalone SQL migrations. |
 
 The `SECURITY DEFINER` RPCs in this module are called by the `authenticated` role, but each function checks `auth.uid()` or `is_admin()` before acting. Never give the `service_role key` to the browser and never disable RLS to fix problems quickly.
