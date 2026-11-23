@@ -28,7 +28,7 @@ export default defineConfig({
         },
       ],
       editLink: {
-        baseUrl: 'https://github.com/withnexora/nexora-docs/edit/main/docs-site/',
+        baseUrl: 'https://github.com/withnexora/nexora-docs/edit/main/',
       },
       lastUpdated: true,
       head: [
