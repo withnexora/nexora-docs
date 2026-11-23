@@ -1,0 +1,57 @@
+# Account, Balance and Zalo Top-up Operations
+
+NEXORA manages balances with an **immutable, transaction-based ledger**. There is no frontend form that edits the `balance` value directly; every credit or debit goes through an RPC that checks permissions and writes `wallet_ledger` and `account_audit_log` entries.
+
+## Feature scope
+
+| Group | Capabilities |
+| --- | --- |
+| Customers | Update name/username, change email/password, use Forgot password, view balance and ledger, submit top-up requests and account-closure requests. |
+| Administrators | View customers, suspend/reactivate accounts, issue warnings, edit name/username, send password-reset emails, close/anonymize after reconciliation, credit/debit balances, approve/reject top-ups and read the audit log. |
+| Database | Enforces RLS, checks `is_admin()`, locks rows during balance adjustments and blocks non-active accounts from creating orders. |
+
+## Zalo top-up flow
+
+1. The customer opens **Account & balance** from the storefront profile button and enters an amount and a note.
+2. The site creates a `wallet_topup_requests` row with status `pending`, then opens the shop's Zalo so the customer can send the request code and transfer details.
+3. An admin reconciles the real bank transaction in the Command Deck.
+4. When the admin chooses **Approve**, the RPC credits `wallet_accounts`, writes a `topup` row in `wallet_ledger` and records an audit log entry.
+5. When rejected, the request is stored as `rejected` with a reason and the balance is **not** changed.
+
+> Never mark a top-up as approved based only on a screenshot or message. Reconcile the actual received transaction before crediting the balance.
+
+## Balance adjustments
+
+| Action | Input | Result |
+| --- | ---: | --- |
+| Manual credit | Positive amount | `admin_credit` ledger row. |
+| Manual debit | Negative amount | `admin_debit` row; the database rejects it if the balance would go negative. |
+| Order payment | Automatic debit | `wallet_payment` row; the order becomes `paid`. |
+| Top-up approval | Automatic credit | `topup` row linked to the request code. |
+
+Admins must enter a reason for every manual credit or debit. For refunds, prefer a clearly annotated `refund`/credit row instead of deleting history.
+
+## Verified test
+
+The balance adjustment flow was tested with a **1,000 ₫** credit, confirming the ledger row and audit log, then debited back exactly **1,000 ₫**. The final balance returned to **0 ₫** and both records were kept for reconciliation. Do not use this data as proof that real money was received.
+
+## Status and password management
+
+`active` lets a customer create orders and pay from balance. `suspended`, `banned` or `deletion_requested` block new transactions; every status change writes an audit log. Admins can neither see nor set a customer's password directly. The **password-reset email** button sends a Supabase Auth link to the customer, who sets a new password through the secure flow.
+
+Customers change their own email/password in the Account Center and can submit an **account-closure request** on the Security tab. The system only closes/anonymizes an account when the balance is zero, no orders are in processing or delivery, and an admin has recorded reconciliation notes. This preserves the ledger and orders needed for reconciliation instead of hard-deleting the Auth account and breaking data relationships.
+
+If Supabase email confirmation is enabled in the future, configure redirect URLs and production SMTP before using email flows. See the [deployment guide](DEPLOYMENT_GUIDE_EN.md) for details.[1]
+
+## Schema and migrations
+
+| Database state | File to use |
+| --- | --- |
+| New/empty Supabase project | [`../supabase-unified.sql`](../supabase-unified.sql). |
+| NEXORA project with the canonical schema | Use managed DDL changes generated from `supabase-unified.sql`; the repository no longer keeps standalone SQL migrations. |
+
+The `SECURITY DEFINER` RPCs in this module are called by the `authenticated` role, but each function checks `auth.uid()` or `is_admin()` before acting. Never give the `service_role key` to the browser and never disable RLS to fix problems quickly.
+
+## References
+
+[1] [Supabase — Password-based Auth](https://supabase.com/docs/guides/auth/passwords)

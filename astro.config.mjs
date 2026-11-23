@@ -24,14 +24,32 @@ export default defineConfig({
         {
           icon: 'github',
           label: 'GitHub',
-          href: 'https://github.com/withnexora/nexora',
+          href: 'https://github.com/minhduc290613/tech-ecommerce-store',
         },
       ],
       editLink: {
-        baseUrl: 'https://github.com/withnexora/nexora-docs/edit/main',
+        baseUrl: 'https://github.com/minhduc290613/tech-ecommerce-store/edit/main/docs-site/',
       },
       lastUpdated: true,
+      head: [
+        {
+          // Tự chọn chế độ nhẹ cho máy yếu (đặt trước khi vẽ để tránh nháy)
+          tag: 'script',
+          content:
+            "(function(){try{var d=document.documentElement,l=localStorage.getItem('nx-fx');var low=(navigator.hardwareConcurrency||8)<=4||(navigator.deviceMemory||8)<=4||matchMedia('(prefers-reduced-data: reduce)').matches;if(l==='lite'||(l!=='full'&&low))d.dataset.fx='lite'}catch(e){}})()",
+        },
+        {
+          // Tạm dừng animation nền khi đang cuộn
+          tag: 'script',
+          content:
+            "(function(){var t,d=document.documentElement;addEventListener('scroll',function(){d.classList.add('is-scrolling');clearTimeout(t);t=setTimeout(function(){d.classList.remove('is-scrolling')},160)},{passive:true})})()",
+        },
+      ],
       customCss: ['./src/styles/custom.css'],
+      components: {
+        ThemeSelect: './src/components/ThemeToggle.astro',
+        Search: './src/components/SearchWithAI.astro',
+      },
       sidebar: [
         {
           label: 'Bắt đầu',
@@ -61,8 +79,7 @@ export default defineConfig({
               translations: { en: 'Full guides' },
               collapsed: true,
               items: [
-                { slug: 'reference/guide-a-z', label: 'Hướng dẫn A–Z', translations: { en: 'Guide A–Z (VI)' } },
-                { slug: 'reference/deployment-guide', label: 'Deployment guide (EN)', translations: { en: 'Deployment guide' } },
+                { slug: 'reference/full-guide', label: 'Hướng dẫn A–Z', translations: { en: 'Deployment guide' } },
                 { slug: 'reference/smtp-setup', label: 'SMTP & email', translations: { en: 'SMTP & email' } },
                 { slug: 'reference/payos-setup', label: 'PayOS', translations: { en: 'PayOS' } },
                 { slug: 'reference/render-env', label: 'Render environment', translations: { en: 'Render environment' } },

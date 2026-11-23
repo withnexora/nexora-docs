@@ -1,0 +1,18 @@
+# Technical Notes — Multi-provider Automatic Bank Transfer
+
+This document records integration requirements and constraints from provider documentation. It contains no API keys, webhook secrets, bank accounts or real transaction data.
+
+| Provider | Model | Authentication / reconciliation |
+| --- | --- | --- |
+| SePay | HTTP POST webhook on each transaction. | Prefer HMAC-SHA256 over the raw body, check the timestamp against replay and use the transaction `id` as the idempotency key. [1] [2] |
+| Casso | HTTP POST webhook carrying a list of transactions. | Check the `secure-token` header, accept incoming-money transactions only and use the Casso transaction ID as the idempotency key. [3] |
+| VietQR Host2Host | Per-order dynamic QR and synchronous transaction callback. | VietQR requires a Basic Auth/Bearer API token, the Transaction Sync API and connection details issued after UAT/go-live. [4] |
+
+NEXORA's design must confirm an order only when the provider is enabled, the callback is authenticated, the transaction is incoming money, the order code/amount match and the transaction ID has never been processed. Webhook secrets live only in server environment variables; the Command Deck only manages provider selection, on/off state and endpoint URLs.
+
+## Sources
+
+[1]: https://developer.sepay.vn/en/sepay-webhooks/xac-thuc "SePay Webhook authentication"
+[2]: https://developer.sepay.vn/en/sepay-webhooks/tich-hop-webhook "SePay webhook integration and deduplication"
+[3]: https://developer.casso.vn/v1/thuc-hanh/tich-hop-xac-nhan-thanh-toan "Casso payment confirmation webhook"
+[4]: https://doc.vietqr.vn/doc/api-vietqr-callback/api-vietqr-host2host/integrated-document-for-payment-service-vietqr "VietQR Host2Host integration"

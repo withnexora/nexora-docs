@@ -1,5 +1,6 @@
-/* NEXORA theme — Circuit Atelier: cyan + violet trên nền tối */
-
+/* NEXORA theme — Liquid Glass (bản tối ưu): cyan + violet, bo góc, kính lỏng.
+   Quy tắc hiệu năng: blur thật chỉ ở header và hộp thoại; mọi nơi khác dùng nền bán trong suốt,
+   gradient và viền sáng (vẽ rất rẻ). Chuyển động chỉ dùng transform (chạy trên GPU). */
 :root {
   --nx-cyan: #06d6e8;
   --nx-violet: #8b3dff;
@@ -7,9 +8,12 @@
   --sl-content-width: 50rem;
   --sl-sidebar-width: 18.5rem;
   --nx-radius: 0.75rem;
+  --nx-r-sm: 0.7rem;
+  --nx-r-md: 1rem;
+  --nx-r-lg: 1.4rem;
 }
 
-/* Dark (mặc định của thương hiệu) */
+/* Dark */
 :root,
 :root[data-theme='dark'] {
   --sl-color-accent-low: #2a1459;
@@ -23,6 +27,16 @@
   --sl-color-gray-5: #323650;
   --sl-color-gray-6: #1d2036;
   --sl-color-black: #11131f;
+  --nx-glass-bg: rgba(255, 255, 255, 0.06);
+  --nx-glass-bg-strong: rgba(255, 255, 255, 0.11);
+  --nx-glass-border: rgba(255, 255, 255, 0.16);
+  --nx-glass-highlight: rgba(255, 255, 255, 0.28);
+  --nx-glass-shadow: 0 6px 18px -10px rgba(0, 0, 0, 0.5);
+  --nx-blob-a: rgba(6, 214, 232, 0.34);
+  --nx-blob-b: rgba(139, 61, 255, 0.4);
+  --nx-blob-c: rgba(255, 94, 196, 0.22);
+  --sl-color-bg-nav: rgba(17, 19, 31, 0.62);
+  --sl-color-bg-sidebar: rgba(17, 19, 31, 0.5);
 }
 
 /* Light */
@@ -39,12 +53,44 @@
   --sl-color-gray-6: #eef0f7;
   --sl-color-gray-7: #f6f7fb;
   --sl-color-black: #ffffff;
+  --nx-glass-bg: rgba(255, 255, 255, 0.58);
+  --nx-glass-bg-strong: rgba(255, 255, 255, 0.8);
+  --nx-glass-border: rgba(255, 255, 255, 0.9);
+  --nx-glass-highlight: rgba(255, 255, 255, 1);
+  --nx-glass-shadow: 0 6px 18px -10px rgba(76, 29, 149, 0.25);
+  --nx-blob-a: rgba(6, 214, 232, 0.3);
+  --nx-blob-b: rgba(139, 61, 255, 0.26);
+  --nx-blob-c: rgba(255, 94, 196, 0.2);
+  --sl-color-bg-nav: rgba(255, 255, 255, 0.66);
+  --sl-color-bg-sidebar: rgba(255, 255, 255, 0.45);
 }
 
-/* Hero (splash) */
-[data-has-hero] .hero {
-  padding-block: clamp(2rem, 6vw, 4.5rem);
+/* ---------- Nền chất lỏng: gradient mềm trôi bằng transform (không filter blur) ---------- */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+  will-change: transform;
 }
+body::before {
+  width: 64vmax; height: 64vmax; top: -16vmax; left: -14vmax;
+  background: radial-gradient(circle closest-side at 38% 38%, var(--nx-blob-a), transparent),
+              radial-gradient(circle closest-side at 66% 66%, var(--nx-blob-b), transparent);
+  animation: nx-drift-a 30s ease-in-out infinite alternate;
+}
+body::after {
+  width: 60vmax; height: 60vmax; right: -14vmax; bottom: -16vmax;
+  background: radial-gradient(circle closest-side at 62% 40%, var(--nx-blob-b), transparent),
+              radial-gradient(circle closest-side at 34% 66%, var(--nx-blob-c), transparent);
+  animation: nx-drift-b 36s ease-in-out infinite alternate;
+}
+@keyframes nx-drift-a { to { transform: translate3d(14vmax, 10vmax, 0) scale(1.15) rotate(25deg); } }
+@keyframes nx-drift-b { to { transform: translate3d(-12vmax, -9vmax, 0) scale(1.12) rotate(-20deg); } }
+
+/* ---------- Hero ---------- */
+[data-has-hero] .hero { padding-block: clamp(2rem, 6vw, 4.5rem); }
 [data-has-hero] .hero h1 {
   background: linear-gradient(100deg, var(--nx-cyan), var(--nx-violet));
   -webkit-background-clip: text;
@@ -53,63 +99,422 @@
   letter-spacing: -0.02em;
 }
 [data-has-hero] .hero img {
-  filter: drop-shadow(0 0 2.5rem color-mix(in srgb, var(--nx-cyan) 45%, transparent));
+  filter: drop-shadow(0 0 2rem color-mix(in srgb, var(--nx-cyan) 45%, transparent));
 }
-[data-has-hero] .sl-container {
-  position: relative;
+
+/* ---------- Thanh nổi bo tròn ---------- */
+header.header {
+  inset-inline: 0.75rem;
+  inset-block-start: 0.6rem;
+  width: auto;
+  height: calc(var(--sl-nav-height) - 0.2rem);
+  border: 1px solid var(--nx-glass-border);
+  border-radius: var(--nx-r-lg);
+  box-shadow: inset 0 1px 0 var(--nx-glass-highlight), var(--nx-glass-shadow);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);   /* blur duy nhất khi cuộn: nội dung trượt dưới header */
 }
-:root[data-theme='dark'] [data-has-hero] .main-frame::before,
-:root:not([data-theme]) [data-has-hero] .main-frame::before {
+/* Nội dung mờ dần dưới header: lớp gradient, không dùng backdrop-filter */
+.page::before {
   content: '';
-  position: absolute;
+  position: fixed;
   inset: 0 0 auto 0;
-  height: 28rem;
-  z-index: -1;
-  background:
-    radial-gradient(40rem 18rem at 15% 0%, color-mix(in srgb, var(--nx-cyan) 16%, transparent), transparent 70%),
-    radial-gradient(40rem 18rem at 85% 0%, color-mix(in srgb, var(--nx-violet) 22%, transparent), transparent 70%);
+  height: calc(var(--sl-nav-height) + 1.4rem);
+  z-index: calc(var(--sl-z-index-navbar) - 1);
+  background: linear-gradient(var(--sl-color-black) 30%, transparent);
+  opacity: 0.85;
   pointer-events: none;
 }
 
-/* Cards */
-.sl-markdown-content .card {
-  border-radius: var(--nx-radius);
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+@media (min-width: 50rem) {
+  .sidebar-pane {
+    inset-block: calc(var(--sl-nav-height) + 0.75rem) 0.75rem;
+    inset-inline-start: 0.75rem;
+    width: calc(var(--sl-sidebar-width) - 1.5rem);
+    border: 1px solid var(--nx-glass-border);
+    border-radius: var(--nx-r-lg);
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 var(--nx-glass-highlight), var(--nx-glass-shadow);
+  }
+  /* mép dưới mờ dần bằng lớp phủ (rẻ hơn mask-image) */
+  .sidebar-pane::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 2.5rem;
+    background: linear-gradient(transparent, color-mix(in srgb, var(--sl-color-black) 70%, transparent));
+    pointer-events: none;
+  }
+  .sidebar-content { padding-bottom: 3rem; }
+  .right-sidebar-container { border: 0; background: transparent; }
+  .right-sidebar-panel {
+    margin-top: 0.75rem;
+    padding: 1rem 0.9rem;
+    border: 1px solid var(--nx-glass-border);
+    border-radius: var(--nx-r-lg);
+    background: var(--nx-glass-bg);
+    box-shadow: inset 0 1px 0 var(--nx-glass-highlight), var(--nx-glass-shadow);
+  }
 }
-.sl-markdown-content .card:hover {
-  transform: translateY(-2px);
-  border-color: var(--nx-violet);
-  box-shadow: 0 0.5rem 1.5rem -0.75rem color-mix(in srgb, var(--nx-violet) 55%, transparent);
+
+/* ---------- Menu chọn tài liệu: viên bo tròn ---------- */
+.sidebar-content a,
+.sidebar-content summary,
+.right-sidebar a,
+starlight-toc a {
+  border-radius: var(--nx-r-sm);
 }
+.sidebar-content a:hover,
+.sidebar-content summary:hover { background: var(--nx-glass-bg-strong); }
+.sidebar-content a[aria-current='page'] {
+  background: linear-gradient(120deg, var(--nx-cyan), var(--nx-violet));
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 8px 20px -10px var(--nx-violet);
+}
+.sidebar-content summary { padding-inline: 0.5rem; }
+.sidebar-content details > summary .large { font-weight: 650; letter-spacing: 0.01em; }
+starlight-toc a[aria-current='true'] { background: var(--nx-glass-bg-strong); }
+
+/* ---------- Bo tròn các khối còn lại ---------- */
+starlight-lang-select select,
+site-search button[data-open-modal],
+starlight-menu-button button,
+.sl-link-button { border-radius: 999px; }
+starlight-lang-select select {
+  background-color: var(--nx-glass-bg);
+  border: 1px solid var(--nx-glass-border);
+}
+starlight-lang-select select option { background: var(--sl-color-gray-6); color: var(--sl-color-white); }
+site-search button[data-open-modal] { background: var(--nx-glass-bg); border: 1px solid var(--nx-glass-border); }
+kbd { border-radius: 0.45rem; }
+.sl-markdown-content :not(pre) > code { border-radius: 0.5rem; }
+.sl-markdown-content img,
+.sl-markdown-content video {
+  border-radius: var(--nx-r-lg);
+  border: 1px solid var(--nx-glass-border);
+}
+.expressive-code { --ec-brdRad: 0.9rem; }
+.sl-markdown-content details {
+  border: 1px solid var(--nx-glass-border);
+  border-radius: var(--nx-r-md);
+  background: var(--nx-glass-bg);
+  padding: 0.75rem 1rem;
+}
+
+/* ---------- Kính lỏng cho nội dung: nền trong suốt + highlight cong + viền sáng ---------- */
+.sl-markdown-content .card,
+.sl-link-card,
+.sl-markdown-content .starlight-aside,
+.pagination-links a,
+.sl-markdown-content table,
+.expressive-code .frame,
+footer.sl-flex {
+  position: relative;
+  border: 1px solid var(--nx-glass-border);
+  border-radius: var(--nx-r-lg);
+  background:
+    linear-gradient(135deg, var(--nx-glass-highlight) 0%, transparent 38%, transparent 70%, color-mix(in srgb, var(--nx-cyan) 14%, transparent) 100%),
+    var(--nx-glass-bg);
+  box-shadow: inset 0 1px 0 var(--nx-glass-highlight), inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+}
+.sl-markdown-content .card,
+.sl-link-card { box-shadow: inset 0 1px 0 var(--nx-glass-highlight), var(--nx-glass-shadow); }
+.sl-markdown-content .starlight-aside {
+  border-inline-start-width: 4px;
+  background:
+    linear-gradient(135deg, var(--nx-glass-highlight) 0%, transparent 40%),
+    color-mix(in srgb, var(--sl-color-asides-text-accent) 12%, var(--nx-glass-bg));
+}
+.sl-markdown-content .card,
 .sl-link-card {
-  border-radius: var(--nx-radius);
+  transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+.sl-markdown-content .card:hover { transform: translate3d(0, -2px, 0); border-color: var(--nx-violet); }
+.sl-link-card:hover { transform: translate3d(0, -2px, 0); border-color: var(--nx-cyan); }
+.sl-markdown-content table { display: block; overflow-x: auto; }
+.expressive-code .frame .header { border-start-start-radius: var(--nx-r-lg); border-start-end-radius: var(--nx-r-lg); }
+.expressive-code pre { border-radius: var(--nx-r-lg); }
+footer.sl-flex { margin-top: 3rem; padding: 1rem 1.25rem; }
+footer .meta a {
+  display: inline-flex;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--nx-glass-border);
+  background: var(--nx-glass-bg);
+}
+
+/* Làm mờ tập trung: card khác trong lưới mờ đi khi rê chuột (chỉ opacity + blur nhẹ, áp dụng tức thì) */
+@media (hover: hover) {
+  .sl-markdown-content .card-grid:has(> .card:hover) > .card:not(:hover),
+  .sl-markdown-content .card-grid:has(> .sl-link-card:hover) > .sl-link-card:not(:hover) {
+    opacity: 0.55;
+  }
+}
+
+/* Nút CTA: vệt sáng chạy bằng background-position */
+.sl-link-button {
+  box-shadow: inset 0 1px 0 var(--nx-glass-highlight), 0 6px 20px -8px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s ease;
+}
+.sl-link-button:hover { transform: translate3d(0, -2px, 0); }
+.sl-link-button.secondary,
+.sl-link-button.minimal { background: var(--nx-glass-bg); border-color: var(--nx-glass-border); }
+.sl-link-button.primary {
+  background-image: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.45) 50%, transparent 70%);
+  background-size: 250% 100%;
+  background-position: 120% 0;
+  background-repeat: no-repeat;
+  background-color: var(--sl-color-accent);
+  transition: background-position 0.9s ease, transform 0.2s ease;
+}
+.sl-link-button.primary:hover { background-position: -20% 0; }
+
+/* Hộp thoại tìm kiếm Pagefind: blur chỉ khi mở */
+dialog:not(.nx-ai-panel)[aria-label] > div {
+  background: var(--nx-glass-bg-strong);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--nx-glass-border);
+  border-radius: 1.25rem;
+}
+
+/* ---------- Hiệu năng ---------- */
+/* Đang cuộn: dừng chuyển động nền để trình duyệt chỉ lo cuộn */
+html.is-scrolling body::before,
+html.is-scrolling body::after { animation-play-state: paused; }
+/* Chế độ nhẹ (tự bật trên máy ≤4 nhân/≤4GB RAM hoặc khi đặt localStorage nx-fx=lite): không blur, không chuyển động */
+html[data-fx='lite'] body::before,
+html[data-fx='lite'] body::after { animation: none; will-change: auto; }
+html[data-fx='lite'] header.header,
+html[data-fx='lite'] dialog.nx-ai-panel,
+html[data-fx='lite'] dialog[aria-label] > div { -webkit-backdrop-filter: none; backdrop-filter: none; }
+html[data-fx='lite'] header.header { background: var(--sl-color-gray-6); }
+html[data-fx='lite'] .sl-markdown-content .card-grid > * { opacity: 1 !important; }
+
+.sidebar-pane,
+.right-sidebar-panel,
+.sl-markdown-content .card,
+.sl-link-card,
+.sl-markdown-content .starlight-aside {
+  contain: layout paint style;
+}
+@media (prefers-reduced-motion: reduce) {
+  body::before, body::after { animation: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  header.header, dialog.nx-ai-panel, dialog[aria-label] > div { -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* ===================== TRỢ LÝ AI ===================== */
+.nx-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.nx-search-wrap site-search {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.nx-ai-btn {
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 2.4rem;
+  padding: 0 0.85rem 0 0.55rem;
+  border: 1px solid var(--nx-glass-border);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--nx-cyan) 18%, var(--nx-glass-bg)), color-mix(in srgb, var(--nx-violet) 22%, var(--nx-glass-bg)));
+  color: var(--sl-color-white);
+  font: inherit;
+  font-size: var(--sl-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 var(--nx-glass-highlight), 0 6px 22px -10px var(--nx-violet);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+.nx-ai-btn svg {
+}
+.nx-ai-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+}
+@media (max-width: 40rem) {
+  .nx-ai-btn-label { display: none; }
+  .nx-ai-btn { padding: 0 0.55rem; }
+}
+dialog.nx-ai-panel {
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  position: fixed;
+  inset: calc(var(--sl-nav-height) + 1rem) 1rem auto auto;
+  margin: 0;
+  width: min(27rem, calc(100vw - 2rem));
+  max-height: min(38rem, calc(100dvh - var(--sl-nav-height) - 2rem));
+  padding: 0;
+  border: 1px solid var(--nx-glass-border);
+  border-radius: var(--nx-r-lg);
+  background: var(--nx-glass-bg-strong);
+  color: var(--sl-color-text);
+  box-shadow: inset 0 1px 0 var(--nx-glass-highlight), 0 24px 60px -18px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+dialog.nx-ai-panel[open] {
+  display: flex;
+  flex-direction: column;
+  animation: nx-pop 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+dialog.nx-ai-panel::backdrop {
+  background: rgba(8, 10, 24, 0.28);
+}
+@keyframes nx-pop {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+.nx-ai-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--nx-glass-border);
+}
+.nx-ai-avatar {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--nx-glass-bg);
+  border: 1px solid var(--nx-glass-border);
+  box-shadow: 0 0 22px -4px var(--nx-cyan);
+}
+.nx-ai-titles { display: grid; line-height: 1.25; flex: 1; }
+.nx-ai-titles small { color: var(--sl-color-gray-3); }
+.nx-ai-model {
+  height: 2rem;
+  padding: 0 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--nx-glass-border);
+  background: var(--nx-glass-bg);
+  color: inherit;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.nx-ai-model option { background: var(--sl-color-gray-6); color: var(--sl-color-white); }
+.nx-ai-by {
+  display: inline-block;
+  margin-top: 0.15rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--nx-glass-border);
+  font-size: 0.68rem;
+  color: var(--sl-color-gray-3);
+}
+.nx-ai-close {
+  width: 2rem; height: 2rem;
+  border-radius: 50%;
+  border: 1px solid var(--nx-glass-border);
+  background: var(--nx-glass-bg);
+  color: inherit;
+  cursor: pointer;
+}
+.nx-ai-log {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem;
+  min-height: 7rem;
+}
+.nx-ai-msg {
+  max-width: 92%;
+  padding: 0.6rem 0.85rem;
+  border-radius: 1.1rem;
+  font-size: var(--sl-text-sm);
+  line-height: 1.5;
+  border: 1px solid var(--nx-glass-border);
+}
+.nx-ai-msg p { margin: 0 0 0.5rem; }
+.nx-ai-msg.user {
+  align-self: flex-end;
+  background: linear-gradient(120deg, var(--nx-cyan), var(--nx-violet));
+  color: #fff;
+  border-bottom-right-radius: 0.3rem;
+}
+.nx-ai-msg.bot {
+  align-self: flex-start;
+  background: var(--nx-glass-bg);
+  border-bottom-left-radius: 0.3rem;
+}
+.nx-ai-src {
+  display: grid;
+  gap: 0.15rem;
+  margin-top: 0.45rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--nx-r-md);
+  border: 1px solid var(--nx-glass-border);
+  background: var(--nx-glass-bg);
+  color: inherit;
+  text-decoration: none;
   transition: transform 0.15s ease, border-color 0.15s ease;
 }
-.sl-link-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--nx-cyan);
+.nx-ai-src:hover { transform: translateY(-1px); border-color: var(--nx-cyan); }
+.nx-ai-src b { color: var(--sl-color-text-accent); }
+.nx-ai-src span { color: var(--sl-color-gray-2); font-size: 0.8rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.nx-ai-src mark { background: color-mix(in srgb, var(--nx-cyan) 35%, transparent); color: inherit; border-radius: 0.25rem; padding: 0 0.15rem; }
+.nx-ai-src em { font-style: normal; font-size: 0.75rem; color: var(--nx-cyan); }
+.nx-ai-dots i {
+  display: inline-block; width: 6px; height: 6px; margin-right: 3px; border-radius: 50%;
+  background: var(--nx-cyan); animation: nx-dot 1s infinite ease-in-out;
+}
+.nx-ai-dots i:nth-child(2) { animation-delay: 0.15s; }
+.nx-ai-dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes nx-dot { 0%, 80%, 100% { transform: scale(0.5); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+.nx-ai-chips {
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+  padding: 0 1rem 0.6rem;
+}
+.nx-ai-chip {
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--nx-glass-border);
+  background: var(--nx-glass-bg);
+  color: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.nx-ai-chip:hover { transform: translateY(-1px); background: var(--nx-glass-bg-strong); }
+.nx-ai-form {
+  display: flex; gap: 0.5rem;
+  padding: 0.75rem 1rem 0.5rem;
+  border-top: 1px solid var(--nx-glass-border);
+}
+.nx-ai-form input {
+  flex: 1; min-width: 0;
+  padding: 0.6rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--nx-glass-border);
+  background: var(--nx-glass-bg);
+  color: inherit;
+  font: inherit;
+  font-size: var(--sl-text-sm);
+}
+.nx-ai-form input:focus { outline: 2px solid var(--nx-cyan); outline-offset: 1px; }
+.nx-ai-send {
+  width: 2.5rem; height: 2.5rem;
+  border-radius: 50%;
+  border: 0;
+  background: linear-gradient(120deg, var(--nx-cyan), var(--nx-violet));
+  color: #fff;
+  cursor: pointer;
+}
+.nx-ai-note { margin: 0; padding: 0 1rem 0.75rem; font-size: 0.7rem; color: var(--sl-color-gray-3); text-align: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-ai-btn svg, dialog.nx-ai-panel[open] { animation: none; }
 }
 
-
-/* Bảng, code, ảnh */
-.sl-markdown-content table {
-  display: block;
-  overflow-x: auto;
-  border-radius: var(--nx-radius);
-}
-.sl-markdown-content img {
-  border-radius: var(--nx-radius);
-  border: 1px solid var(--sl-color-hairline);
-}
-.sl-markdown-content :not(pre) > code {
-  border-radius: 0.35rem;
-}
-.expressive-code {
-  --ec-brdRad: 0.7rem;
-}
-
-/* Sidebar: nhóm rõ ràng hơn */
-.sidebar-content details > summary .large {
-  font-weight: 650;
-  letter-spacing: 0.01em;
-}

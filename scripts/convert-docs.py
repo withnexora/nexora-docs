@@ -8,19 +8,14 @@ from pathlib import Path
 
 SRC = Path(sys.argv[1] if len(sys.argv) > 1 else 'docs')
 OUT = Path(sys.argv[2] if len(sys.argv) > 2 else 'src/content/docs')
-GH = 'https://github.com/withnexora/nexora/blob/main/'
+GH = 'https://github.com/minhduc290613/tech-ecommerce-store/blob/main/'
 
 # ---------- Metadata các trang tham chiếu ----------
 # mode: vi | en | both | split(vi/en theo mục) | tail(vi đầy đủ + en chỉ phần English)
 REF = [
- dict(src='HUONG_DAN_A_Z.md', slug='guide-a-z', mode='vi', order=1,
+ dict(src='HUONG_DAN_A_Z.md', slug='full-guide', mode='vi', order=1,
       t={'vi': 'Hướng dẫn triển khai & sử dụng A–Z'}, d={'vi': 'Từ clone, Supabase, admin, QR/Zalo, role, media đến GitHub, aaPanel, cPanel, static hosting và checklist production.'},
       b={'vi': ('Đầy đủ', 'success')}, chips={'vi': [('Hướng dẫn đầy đủ', 'success'), ('Tiếng Việt', 'note'), ('Phiên bản 2026-08-29', 'tip')]}),
- dict(src='DEPLOYMENT_GUIDE_EN.md', slug='deployment-guide', mode='both', order=1,
-      t={'vi': 'Deployment & user guide (tiếng Anh)', 'en': 'Deployment & user guide'},
-      d={'vi': 'Bản hướng dẫn triển khai và sử dụng bằng tiếng Anh: local, Supabase, hosting, role, thanh toán, email.',
-         'en': 'Local setup, Supabase, GitHub Pages, static hosting, aaPanel, cPanel, roles, payments, email and troubleshooting.'},
-      b={}, chips={'vi': [], 'en': []}),
  dict(src='SMTP_SETUP_BILINGUAL.md', slug='smtp-setup', mode='both', order=2,
       t={'vi': 'SMTP & email giao dịch', 'en': 'SMTP & transactional email'},
       d={'vi': 'Cài đặt SMTP hoặc Resend API, domain/DNS, biến môi trường, reset password, aaPanel, cPanel và bảo mật.',
@@ -86,10 +81,28 @@ REF = [
       t={'vi': 'Lỗi thường gặp', 'en': 'Known errors'}, d={'vi': 'Cách xử lý các lỗi nguy hiểm thường gặp.', 'en': 'How to fix common critical errors.'},
       b={'vi': ('Fix', 'danger'), 'en': ('Fix', 'danger')}, chips={'vi': [('Fix', 'danger'), ('Supabase Auth', 'note')], 'en': [('Fix', 'danger'), ('Supabase Auth', 'note')]}),
 ]
+EN_DIR = Path(__file__).resolve().parent / 'en-src'   # bản dịch tiếng Anh cho trang chỉ có tiếng Việt
+EN_META = {
+ 'supabase-workflow': ('Supabase workflow', 'Canonical 25-table schema, RLS, one-time apply flow, verification, checkout and safe admin grants.'),
+ 'account-wallet': ('Accounts, balance & Zalo top-up', 'Ledger, Zalo top-ups, customer administration, RLS and reconciliation workflow.'),
+ 'role-content-affiliate': ('Roles, moderation, affiliate & refunds', 'Role matrix, moderation, article reader, 15% referral, refunds, CSV and product–shop mapping.'),
+ 'feature-expansion-scope': ('Feature expansion scope', 'Scope of the role, content and operations expansion.'),
+ 'auto-transfer-providers': ('Multi-provider automatic transfer', 'Technical notes on automatic bank transfer across providers.'),
+ 'mobile-email-verification': ('Mobile & email URL verification', 'Mobile and email-link verification results before release.'),
+ 'verification-notes': ('UI verification notes', 'Command Deck and key-flow verification notes before release.'),
+ 'full-guide': ('Deployment & user guide', 'Local setup, Supabase, GitHub Pages, static hosting, aaPanel, cPanel, roles, payments, email and troubleshooting.'),
+ 'legacy-migrations': ('SQL schema policy', 'The repository keeps a single canonical schema.'),
+}
 LOCS = {}
 for r in REF:
     LOCS[r['src']] = {'vi': ['vi'], 'en': ['en']}.get(r['mode'], ['vi', 'en'])
+    if r['mode'] == 'vi' and (EN_DIR / r['src']).exists() and r['slug'] in EN_META:
+        LOCS[r['src']] = ['vi', 'en']
+        r['t']['en'], r['d']['en'] = EN_META[r['slug']]
+        r['chips']['en'] = []
 SLUG = {r['src']: r['slug'] for r in REF}
+SLUG['DEPLOYMENT_GUIDE_EN.md'] = 'full-guide'
+LOCS['DEPLOYMENT_GUIDE_EN.md'] = ['vi', 'en']
 TOPICS = ['getting-started', 'deployment', 'supabase', 'admin', 'payments', 'email-security']
 TOPIC_CHIPS = {
  'getting-started': [('Node.js 20+', 'note'), ('pnpm', 'tip'), ('Supabase', 'success')],
@@ -224,7 +237,8 @@ for r in REF:
             note = f':::note\nThis is the English summary. The full step-by-step guide is written in Vietnamese: [open the full guide](/vi/reference/{r["slug"]}/).\n:::\n\n'
             body = note + convert_body(tail, 'docs', loc, strip_h1=False)
         else:
-            body = convert_body(md, 'docs', loc)
+            src_md = (EN_DIR / r['src']).read_text(encoding='utf-8') if (loc == 'en' and r['mode'] == 'vi') else md
+            body = convert_body(src_md, 'docs', loc)
         write(f'{loc}/reference/{r["slug"]}.mdx',
               page(r['t'][loc], r['d'][loc], body, None))
 
@@ -263,7 +277,7 @@ for loc in ('vi', 'en'):
 
 # ---------- Mục lục reference (có nhóm) ----------
 GROUPS = [
- ('Hướng dẫn đầy đủ', 'Full guides', ['guide-a-z', 'deployment-guide', 'smtp-setup', 'payos-setup', 'render-env', 'supabase-storage']),
+ ('Hướng dẫn đầy đủ', 'Full guides', ['full-guide', 'smtp-setup', 'payos-setup', 'render-env', 'supabase-storage']),
  ('Hệ thống & vận hành', 'Systems & operations', ['supabase-workflow', 'account-wallet', 'role-content-affiliate', 'mantis-admin', 'deferred-work', 'auto-transfer-providers']),
  ('Kiểm thử & ghi chú', 'QA & notes', ['mobile-email-verification', 'verification-notes', 'known-errors', 'feature-expansion-scope', 'legacy-migrations']),
 ]
@@ -288,7 +302,7 @@ for loc in ('vi', 'en'):
     out += [f'## {"Nguồn chuẩn" if vi else "Sources of truth"}', '',
             '| ' + ('Thành phần | Nguồn chuẩn' if vi else 'Component | Source') + ' |', '| --- | --- |',
             f'| Schema Supabase | [`supabase-unified.sql`]({GH}supabase-unified.sql) |',
-            f'| {"Media gốc" if vi else "Original media"} | `client/public/media/` (branch `main`); [`assets/media`](https://github.com/withnexora/nexora/tree/assets/media) {"là bản backup" if vi else "is the backup"} |',
+            f'| {"Media gốc" if vi else "Original media"} | `client/public/media/` (branch `main`); [`assets/media`](https://github.com/minhduc290613/tech-ecommerce-store/tree/assets/media) {"là bản backup" if vi else "is the backup"} |',
             f'| {"Mã ứng dụng và tài liệu" if vi else "App code and docs"} | {"Nhánh GitHub" if vi else "GitHub branch"} `main` |', '',
             f'## {"Tài liệu trong repository" if vi else "Repository documents"}', '',
             f'- [README]({GH}README.md) · [README (EN)]({GH}README_EN.md)',

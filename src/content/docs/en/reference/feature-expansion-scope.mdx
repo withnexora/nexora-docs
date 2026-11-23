@@ -1,0 +1,39 @@
+---
+title: "Feature expansion scope"
+description: "Scope of the role, content and operations expansion."
+---
+
+This document records the NEXORA expansion requested by the administrator, including the content of two images provided on 2026-08-25. It is the reference for implementation and testing.
+
+## Storefront requirements from the first image
+
+| Item | Confirmed requirement |
+| --- | --- |
+| Advanced filters | Quick filtering by technical specifications such as CPU, RAM and storage. |
+| Reviews/comments | Per-product reviews and comments; admins approve or hide them in the Command Deck. |
+| Shops | Show best-selling or highlighted discounted products on each shop's detail page. |
+
+## Administration, finance and content requirements
+
+The administrator asked for real receiving-account details and Zalo contact to be configurable in the admin page, a refund status for orders/user transactions, and CSV export for the balance ledger and top-up requests. This was re-confirmed from the second image.
+
+## Roles and affiliate requirements
+
+| Role | Intended permission scope |
+| --- | --- |
+| `admin` | Highest level; manages roles, shops, banners, sales, descriptions, about text, logo, favicon, effects and all operations. |
+| `moderator` | Combined content moderation (comments/reviews) plus suitable management rights; may write articles. |
+| `order_manager` | Approves and operates orders/refunds within the granted scope. |
+| `marketing` | Creates, edits and publishes articles; no finance or role permissions. |
+| `affiliate` | Only after qualifying; creates referral links, shares them and earns a 15% commission on valid orders. May write articles. |
+| `customer` | Default role with no operational permissions. |
+
+:::note
+Financial states such as affiliate commission and refunds must be written to the ledger/audit log; balances are never edited directly through the UI.
+:::
+
+## Chosen implementation rules
+
+Permissions are stored per role rather than relying on a single admin flag. `admin` keeps full access and is the only role that edits identity/shop configuration; `moderator` manages non-top-level roles, moderates reviews/comments and approves articles; `order_manager` handles orders/refunds; `marketing` and `affiliate` only draft articles. Role changes, moderation, refunds and commissions all create audit logs.
+
+Affiliates have their own referral code/link. Eligibility lives in the program configuration so admins can change it; the first version uses **at least one delivered order and requires approval**. The fixed **15%** commission is credited to the affiliate balance only when the referred order is paid and delivered successfully, and each order earns commission only once. A refund to the wallet is also its own ledger row, while manual bank-transfer refunds only record a status for reconciliation.

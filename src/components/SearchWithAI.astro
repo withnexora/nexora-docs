@@ -1,0 +1,210 @@
+---
+// Thanh tìm kiếm mặc định của Starlight + nút "Hỏi AI" (trợ lý tài liệu) bên cạnh
+import Default from '@astrojs/starlight/components/Search.astro';
+
+const lang = Astro.currentLocale === 'en' ? 'en' : 'vi';
+const T = {
+  vi: {
+    btn: 'Hỏi AI', title: 'Trợ lý NEXORA AI', sub: 'Hỏi nhanh trong tài liệu',
+    placeholder: 'Hỏi về cài đặt, PayOS, Supabase…', send: 'Gửi', close: 'Đóng',
+    hello: 'Xin chào! Mình là trợ lý tài liệu NEXORA. Bạn muốn tra cứu gì?',
+    chips: ['Cài đặt chạy local', 'Cấu hình PayOS webhook', 'Cấp quyền admin', 'Email reset mật khẩu'],
+    found: 'Mình tìm thấy các mục liên quan nhất:', none: 'Mình chưa tìm thấy mục phù hợp. Thử diễn đạt ngắn hơn hoặc dùng từ khóa nhé.',
+    dev: 'Trợ lý cần chỉ mục tìm kiếm — hãy chạy `npm run build && npm run preview` để dùng.',
+    thinking: 'Đang tra cứu…', note: 'Trợ lý tìm kiếm trong tài liệu (chưa kết nối mô hình LLM).', aiNote: 'Câu trả lời do AI tạo, có thể sai. Hãy kiểm tra nguồn bên dưới.', open: 'Mở trang', err: 'Không kết nối được máy chủ AI. Hiển thị kết quả tìm kiếm thay thế:',
+  },
+  en: {
+    btn: 'Ask AI', title: 'NEXORA AI assistant', sub: 'Quick answers from the docs',
+    placeholder: 'Ask about setup, PayOS, Supabase…', send: 'Send', close: 'Close',
+    hello: "Hi there! I'm the NEXORA docs assistant. What would you like to look up?",
+    chips: ['Run locally', 'Configure PayOS webhook', 'Grant admin access', 'Password reset email'],
+    found: 'Here are the most relevant pages:', none: "I couldn't find a match. Try fewer words or keywords.",
+    dev: 'The assistant needs the search index — run `npm run build && npm run preview` to use it.',
+    thinking: 'Looking it up…', note: 'Documentation search assistant (no LLM connected).', aiNote: 'Answers are AI-generated and may be wrong. Check the sources below.', open: 'Open page', err: 'Could not reach the AI server. Showing search results instead:',
+  },
+}[lang];
+---
+
+<div class="nx-search-wrap">
+  <Default {...Astro.props} />
+  <button type="button" class="nx-ai-btn" data-nx-ai-open aria-label={T.btn} title={`${T.btn} (Ctrl+J)`}>
+    <svg width="22" height="22" aria-hidden="true"><use href="#nx-robot"></use></svg>
+    <span class="nx-ai-btn-label">{T.btn}</span>
+  </button>
+</div>
+
+<!-- Biểu tượng robot AI + bộ lọc chất lỏng dùng chung -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="nx-robot-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#06d6e8"></stop>
+      <stop offset="1" stop-color="#8b3dff"></stop>
+    </linearGradient>
+    <filter id="nx-liquid" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="2" seed="7" result="n"></feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="10" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+    </filter>
+  </defs>
+  <symbol id="nx-robot" viewBox="0 0 32 32">
+    <line x1="16" y1="3" x2="16" y2="7" stroke="url(#nx-robot-grad)" stroke-width="2" stroke-linecap="round"></line>
+    <circle cx="16" cy="3" r="2" fill="url(#nx-robot-grad)"></circle>
+    <rect x="5" y="7" width="22" height="18" rx="7" fill="url(#nx-robot-grad)"></rect>
+    <rect x="2" y="13" width="3" height="7" rx="1.5" fill="url(#nx-robot-grad)"></rect>
+    <rect x="27" y="13" width="3" height="7" rx="1.5" fill="url(#nx-robot-grad)"></rect>
+    <rect x="9" y="11" width="14" height="10" rx="5" fill="#0d1020" opacity=".92"></rect>
+    <circle cx="13" cy="15.5" r="1.8" fill="#67e8f9"></circle>
+    <circle cx="19" cy="15.5" r="1.8" fill="#67e8f9"></circle>
+    <path d="M13 19c1.8 1.4 4.2 1.4 6 0" stroke="#67e8f9" stroke-width="1.4" stroke-linecap="round" fill="none"></path>
+  </symbol>
+</svg>
+
+<dialog class="nx-ai-panel" aria-label={T.title} data-lang={lang} data-endpoint={import.meta.env.PUBLIC_AI_ENDPOINT || ''} data-dev={import.meta.env.DEV ? '1' : ''} data-t={JSON.stringify(T)}>
+  <div class="nx-ai-head">
+    <span class="nx-ai-avatar"><svg width="30" height="30" aria-hidden="true"><use href="#nx-robot"></use></svg></span>
+    <div class="nx-ai-titles"><strong>{T.title}</strong><small>{T.sub}</small></div>
+    <select class="nx-ai-model" aria-label="Model AI" hidden></select>
+    <button type="button" class="nx-ai-close" data-nx-ai-close aria-label={T.close}>×</button>
+  </div>
+  <div class="nx-ai-log" aria-live="polite"></div>
+  <div class="nx-ai-chips">{T.chips.map((c) => <button type="button" class="nx-ai-chip">{c}</button>)}</div>
+  <form class="nx-ai-form">
+    <input type="text" name="q" autocomplete="off" placeholder={T.placeholder} aria-label={T.placeholder} />
+    <button type="submit" class="nx-ai-send" aria-label={T.send}>→</button>
+  </form>
+  <p class="nx-ai-note">{import.meta.env.PUBLIC_AI_ENDPOINT ? T.aiNote : T.note}</p>
+</dialog>
+
+<script>
+  const panel = document.querySelector('dialog.nx-ai-panel');
+  if (panel) {
+    const T = JSON.parse(panel.dataset.t || '{}');
+    const lang = panel.dataset.lang || 'vi';
+    const endpoint = panel.dataset.endpoint || '';
+    const isDev = panel.dataset.dev === '1';
+    const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+    const log = panel.querySelector('.nx-ai-log');
+    const form = panel.querySelector('.nx-ai-form');
+    const input = form.querySelector('input');
+    const STOP = new Set(
+      'là và của cho các một những có không được để khi thì trong với này đó như thế nào làm sao gì sao bằng cần muốn hãy tôi mình bạn cách the a an of to in on for and or is are how do does what i you my with can'.split(' ')
+    );
+    let pf = null;
+    const LABEL = { claude: 'Claude', gemini: 'Gemini' };
+    const modelSel = panel.querySelector('.nx-ai-model');
+    let provider = '';
+    let providersLoaded = false;
+
+    // Hỏi server đang bật những model nào; chỉ hiện ô chọn khi có từ 2 model trở lên
+    async function loadProviders() {
+      if (!endpoint || providersLoaded) return;
+      providersLoaded = true;
+      try {
+        const r = await fetch(endpoint.replace(/\/$/, '') + '/providers');
+        const j = await r.json();
+        const list = (j.providers || []).filter((id) => LABEL[id]);
+        let saved = '';
+        try { saved = localStorage.getItem('nx-ai-provider') || ''; } catch {}
+        provider = list.includes(saved) ? saved : j.default || list[0] || '';
+        modelSel.innerHTML = list.map((id) => `<option value="${id}">${LABEL[id]}</option>`).join('');
+        modelSel.value = provider;
+        modelSel.hidden = list.length < 2;
+      } catch { providersLoaded = false; }
+    }
+    modelSel.addEventListener('change', () => {
+      provider = modelSel.value;
+      try { localStorage.setItem('nx-ai-provider', provider); } catch {}
+    });
+
+    const add = (cls, html) => {
+      const el = document.createElement('div');
+      el.className = 'nx-ai-msg ' + cls;
+      el.innerHTML = html;
+      log.appendChild(el);
+      log.scrollTop = log.scrollHeight;
+      return el;
+    };
+    const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    async function loadPagefind() {
+      if (pf) return pf;
+      pf = await import(/* @vite-ignore */ base + '/pagefind/pagefind.js');
+      return pf;
+    }
+
+    async function retrieve(q) {
+      const p = await loadPagefind();
+      const terms = q.toLowerCase().split(/[^\p{L}\p{N}_.-]+/u).filter((t) => t.length > 1 && !STOP.has(t));
+      const queries = [terms.join(' ')];
+      if (terms.length > 1) queries.push(...terms);
+      const score = new Map();
+      for (const query of queries) {
+        if (!query) continue;
+        const res = await p.search(query);
+        const w = query === queries[0] ? 3 : 1;
+        for (const [i, r] of res.results.slice(0, 8).entries()) {
+          const data = await r.data();
+          const prev = score.get(data.url) || { data, s: 0 };
+          prev.s += w * (8 - i);
+          score.set(data.url, prev);
+        }
+        if (score.size >= 3 && query === queries[0]) break;
+      }
+      const prefix = base + '/' + lang + '/';
+      return [...score.values()]
+        .sort((a, b) => (b.data.url.startsWith(prefix) - a.data.url.startsWith(prefix)) || b.s - a.s)
+        .slice(0, 3)
+        .map((x) => x.data);
+    }
+
+    const textOf = (html) => { const d = document.createElement('div'); d.innerHTML = html; return d.textContent || ''; };
+
+    const renderSources = (sources) =>
+      sources.map((d) =>
+        `<a class="nx-ai-src" href="${d.url}"><b>${esc(d.meta?.title || d.url)}</b><span>${d.excerpt}</span><em>${T.open} →</em></a>`
+      ).join('');
+
+    async function ask(q) {
+      add('user', esc(q));
+      const wait = add('bot', `<span class="nx-ai-dots"><i></i><i></i><i></i></span> ${T.thinking}`);
+      try {
+        if (isDev) throw new Error('dev');
+        const sources = await retrieve(q);
+        if (!sources.length) { wait.innerHTML = T.none; return; }
+        if (endpoint) {
+          try {
+            const r = await fetch(endpoint, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ question: q, lang, provider: provider || undefined, sources: sources.map((s) => ({ title: s.meta?.title, url: s.url, excerpt: textOf(s.excerpt) })) }),
+            });
+            const j = await r.json();
+            if (!r.ok || !j.answer) throw new Error('ai');
+            wait.innerHTML = `<p>${esc(String(j.answer)).replace(/\n/g, '<br>')}</p><small class="nx-ai-by">${LABEL[j.provider] || ''}</small>` + renderSources(sources);
+            return;
+          } catch {
+            wait.innerHTML = `<p>${T.err}</p>` + renderSources(sources);
+            return;
+          }
+        }
+        wait.innerHTML = `<p>${T.found}</p>` + renderSources(sources);
+      } catch (e) {
+        wait.innerHTML = e.message === 'dev' ? esc(T.dev) : esc(T.none);
+      }
+      log.scrollTop = log.scrollHeight;
+    }
+
+    const open = () => {
+      if (!panel.open) panel.showModal();
+      if (!log.children.length) add('bot', esc(T.hello));
+      loadProviders();
+      setTimeout(() => input.focus(), 50);
+    };
+    document.querySelectorAll('[data-nx-ai-open]').forEach((b) => b.addEventListener('click', open));
+    panel.querySelector('[data-nx-ai-close]').addEventListener('click', () => panel.close());
+    panel.addEventListener('click', (e) => { if (e.target === panel) panel.close(); });
+    form.addEventListener('submit', (e) => { e.preventDefault(); const q = input.value.trim(); if (q) { input.value = ''; ask(q); } });
+    panel.querySelectorAll('.nx-ai-chip').forEach((c) => c.addEventListener('click', () => { open(); ask(c.textContent); }));
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') { e.preventDefault(); panel.open ? panel.close() : open(); }
+    });
+  }
+</script>

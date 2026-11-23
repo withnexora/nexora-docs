@@ -46,13 +46,13 @@ Luồng điều chỉnh số dư đã được kiểm thử bằng một khoản
 
 Khách tự đổi email/mật khẩu trong Account Center và có thể gửi **Yêu cầu đóng tài khoản** tại tab Bảo mật. Hệ thống chỉ đóng/ẩn danh hóa khi số dư bằng 0, không còn đơn đang xử lý/giao nhận và admin ghi chú đối soát. Cách này giữ ledger/order cần thiết để đối soát, thay vì xóa cứng tài khoản Auth làm mất hoặc đứt quan hệ dữ liệu.
 
-Nếu Supabase bật xác nhận email ở tương lai, hãy cấu hình URL redirect và SMTP production trước khi dùng luồng email. Xem quy trình chi tiết tại [Hướng dẫn A–Z: Email, domain và SMTP](/vi/reference/guide-a-z/#54-khắc-phục-link-email-trỏ-về-localhost).[1]
+Nếu Supabase bật xác nhận email ở tương lai, hãy cấu hình URL redirect và SMTP production trước khi dùng luồng email. Xem quy trình chi tiết tại [Hướng dẫn A–Z: Email, domain và SMTP](/vi/reference/full-guide/#54-khắc-phục-link-email-trỏ-về-localhost).[1]
 
 ## Schema và migration
 
 | Tình trạng database | File cần dùng |
 | --- | --- |
-| Project Supabase mới/trống | [`../supabase-unified.sql`](https://github.com/withnexora/nexora/blob/main/supabase-unified.sql). |
+| Project Supabase mới/trống | [`../supabase-unified.sql`](https://github.com/minhduc290613/tech-ecommerce-store/blob/main/supabase-unified.sql). |
 | Project NEXORA đã có schema canonical | Dùng thay đổi DDL có quản lý được sinh từ `supabase-unified.sql`; repository không còn giữ migration SQL rời. |
 
 Các RPC `SECURITY DEFINER` trong module này được gọi bởi role `authenticated`, nhưng từng hàm kiểm tra `auth.uid()` hoặc `is_admin()` trước khi thao tác. Không cấp `service_role key` cho trình duyệt và không tắt RLS để xử lý lỗi nhanh.

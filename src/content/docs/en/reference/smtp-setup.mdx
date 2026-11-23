@@ -4,82 +4,82 @@ description: "Configure SMTP or the Resend API, domain/DNS, environment variable
 ---
 
 :::note
-**Song ngữ / Bilingual:** Tài liệu này hướng dẫn cấu hình email giao dịch của NEXORA bằng SMTP hoặc Resend API, từ môi trường local đến aaPanel, cPanel và production.
+**Bilingual / Bilingual:** This document guides the configuration of NEXORA transactional email using SMTP or Resend API, from local to aaPanel, cPanel and production environments.
 :::
 
-## 1. Phạm vi tài liệu / Scope
+## 1. Document scope / Scope
 
-NEXORA có hai nhóm email cần phân biệt. **Supabase Auth email** gồm email xác nhận, magic link và reset password do Supabase Auth quản lý. **Transactional email của NEXORA** gồm thông báo trạng thái đơn đã giao, yêu cầu hủy/trả hàng và các mẫu email giao dịch được quản lý trong Command Deck. Hai nhóm này có thể dùng các cấu hình khác nhau.
+NEXORA has two groups of emails that need to be distinguished. **Supabase Auth email** includes confirmation email, magic link and password reset managed by Supabase Auth. **NEXORA's transactional emails** include order status notifications, cancellation/return requests, and transactional email templates managed in the Command Deck. These two groups can use different configurations.
 
-NEXORA chỉ gửi email từ backend. SMTP password, Resend API key, Supabase service-role key và JWT secret không được đưa vào HTML, JavaScript trình duyệt, `VITE_*`, GitHub hoặc file công khai.
+NEXORA only sends emails from the backend. SMTP password, Resend API key, Supabase service-role key and JWT secret are not included in HTML, browser JavaScript, `VITE_*`, GitHub or public files.
 
 NEXORA supports two separate email groups. **Supabase Auth email** covers confirmation, magic-link and password-reset messages managed by Supabase Auth. **NEXORA transactional email** covers delivered-order notifications, cancellation/return status messages and editable transactional templates managed in the Command Deck. These groups may use different provider settings.
 
-NEXORA sends email only from the backend. SMTP passwords, Resend API keys, Supabase service-role keys and JWT secrets must never be placed in HTML, browser JavaScript, `VITE_*` variables, GitHub or public documentation.
+NEXORA sends emails only from the backend. SMTP passwords, Resend API keys, Supabase service-role keys and JWT secrets must never be placed in HTML, browser JavaScript, `VITE_*` variables, GitHub or public documentation.
 
-## 2. Kiến trúc gửi email / Email architecture
+## 2. Email architecture / Email architecture
 
-| Thành phần / Component | Vai trò / Responsibility | Nơi cấu hình / Configuration location |
+| Component / Component | Role / Responsibility | Configuration location |
 |---|---|---|
-| `server/transactional-email.ts` | Kiểm tra secret, render template và gửi email / Checks secrets, renders templates and sends email | Backend only |
-| SMTP | Gửi qua mailbox/domain của nhà cung cấp / Sends through a provider mailbox/domain | Server environment |
-| Resend API | Gửi qua HTTPS API / Sends through an HTTPS API | Server environment |
-| `email_delivery_settings` | Chọn mode, bật/tắt, sender name và public URL / Selects mode, enable flag, sender name and public URL | Supabase + Command Deck |
-| `transactional_email_templates` | Lưu subject, heading, body, CTA và footer / Stores editable email content | Supabase + Command Deck |
-| `/api/transactional-emails/status` | Kiểm tra backend có đủ cấu hình không / Reports backend configuration status | Server route |
-| `/api/transactional-emails/dispatch` | Gửi một email trong queue sau khi kiểm tra quyền / Dispatches a queued email after authorization | Server route |
+| `server/transactional-email.ts` | Check secrets, render templates and send email / Checks secrets, renders templates and sends email | Backend only |
+| SMTP | Sends through a provider mailbox/domain / Sends through a provider mailbox/domain | Server environment |
+| Resend API | Sends through an HTTPS API / Sends through an HTTPS API | Server environment |
+| `email_delivery_settings` | Select mode, enable/disable, sender name and public URL / Selects mode, enable flag, sender name and public URL | Supabase + Command Deck |
+| `transactional_email_templates` | Save subject, heading, body, CTA and footer / Stores editable email content | Supabase + Command Deck |
+| `/api/transactional-emails/status` | Check if the backend has enough configuration / Reports backend configuration status | Server route |
+| `/api/transactional-emails/dispatch` | Dispatches a queued email after authorization | Server routes |
 
-Khi chưa đủ secret, template bị tắt hoặc kênh chưa bật, hệ thống chuyển email queue sang trạng thái `skipped` thay vì cố gửi email thất bại. Điều này giúp staging không vô tình gửi email thật.
+When there is not enough secret, the template is disabled, or the channel is not enabled, the system switches the email queue to the `skipped` state instead of trying to send an email failure. This helps prevent staging from accidentally sending real emails.
 
 If secrets are missing, a template is disabled or the selected channel is not enabled, queued email is marked `skipped` instead of attempting an unsafe send. This keeps staging from accidentally sending real messages.
 
-## 3. Chuẩn bị domain và mailbox / Prepare a domain and mailbox
+## 3. Prepare domain and mailbox / Prepare a domain and mailbox
 
-Bạn cần một địa chỉ người gửi thuộc domain mà bạn kiểm soát, ví dụ `no-reply@example.com` hoặc `orders@example.com`. Không nên dùng địa chỉ người nhận làm địa chỉ gửi. Với production, hãy xác minh sender domain theo hướng dẫn của nhà cung cấp để giảm khả năng email vào spam.
+You need a sender address that belongs to a domain you control, for example `no-reply@example.com` or `orders@example.com`. Do not use the recipient address as the sending address. For production, verify the sender domain according to the provider's instructions to reduce the possibility of emails going into spam.
 
-DNS thường cần các bản ghi SPF và DKIM do nhà cung cấp cung cấp. Một số nhà cung cấp còn yêu cầu DMARC. Không tự sao chép giá trị mẫu giữa các provider; hãy lấy chính xác hostname, record type, name và value từ dashboard của provider.
+DNS typically needs SPF and DKIM records provided by the provider. Some vendors also require DMARC. Do not manually copy template values ​​between providers; Please get the correct hostname, record type, name and value from the provider dashboard.
 
 You need a sender address on a domain you control, such as `no-reply@example.com` or `orders@example.com`. Do not use a recipient address as the sender. For production, verify the sender domain with your provider to improve deliverability.
 
-DNS commonly requires SPF and DKIM records supplied by the provider. Some providers also recommend or require DMARC. Never copy sample values between providers; use the exact hostname, record type, name and value shown by your provider dashboard.
+DNS commonly requires SPF and DKIM records supplied by the provider. Some providers also recommend or require DMARC. Never copy sample values ​​between providers; use the exact hostname, record type, name and value shown by your provider dashboard.
 
-| DNS record | Mục đích / Purpose | Lưu ý / Note |
+| DNS records | Purpose / Purpose | Note / Note |
 |---|---|---|
-| SPF TXT | Cho phép máy chủ/provider gửi thay domain / Authorizes sending servers/providers | Thường chỉ nên có một SPF record tổng hợp |
-| DKIM TXT/CNAME | Ký email / Cryptographically signs mail | Tên record thường có selector |
-| DMARC TXT | Chính sách xử lý email không vượt SPF/DKIM / Policy for failed authentication | Bắt đầu bằng policy giám sát khi domain mới |
-| MX | Nhận email cho mailbox / Receives mail for the mailbox | Không tự đổi nếu website chỉ gửi |
+| SPF TXT | Allows servers/providers to send instead of domain / Authorizes sending servers/providers | There should usually be only one composite SPF record |
+| DKIM TXT/CNAME | Sign emails / Cryptographically signs mail | Record names often have selector |
+| DMARC TXT | Email handling policy does not exceed SPF/DKIM / Policy for failed authentication | Start with a monitoring policy when a new domain |
+| MX | Receives email for the mailbox / Receives mail for the mailbox | Do not change automatically if the website only sends |
 
-## 4. Các biến môi trường / Environment variables
+## 4. Environment variables / Environment variables
 
-Đặt các biến sau **chỉ ở server runtime**. Tên biến phải giữ đúng như backend NEXORA đang đọc.
+Set the following variables **server runtime only**. The variable name must remain the same as the NEXORA backend is reading.
 
 Set the following variables **only in the server runtime**. Keep the names exactly as read by the NEXORA backend.
 
-| Biến / Variable | Bắt buộc khi nào / Required when | Ví dụ an toàn / Safe example |
+| Variable / Variable | Required when / Required when | Safe example / Safe example |
 |---|---|---|
-| `SUPABASE_URL` | Luôn cần cho transactional email / Required for transactional email | `https://your-project.supabase.co` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Luôn cần ở backend / Required on the backend | Không ghi giá trị thật vào docs |
-| `EMAIL_FROM_ADDRESS` | Luôn cần khi gửi / Required when sending | `NEXORA <no-reply@example.com>` |
+| `SUPABASE_URL` | Always required for transactional email / Required for transactional email | `https://your-project.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Always needed on the backend / Required on the backend | Do not write the actual value in the docs |
+| `EMAIL_FROM_ADDRESS` | Always needed when sending / Required when sending | `NEXORA <no-reply@example.com>` |
 | `SMTP_HOST` | Mode `smtp` / SMTP mode | `smtp.example.com` |
-| `SMTP_PORT` | Mode `smtp` / SMTP mode | `465` hoặc `587` |
+| `SMTP_PORT` | Mode `smtp` / SMTP mode | `465` or `587` |
 | `SMTP_USERNAME` | Mode `smtp` / SMTP mode | `no-reply@example.com` |
-| `SMTP_PASSWORD` | Mode `smtp` / SMTP mode | Không commit vào Git |
-| `RESEND_API_KEY` | Mode `api` / API mode | Không commit vào Git |
+| `SMTP_PASSWORD` | Mode `smtp` / SMTP mode | Do not commit to Git |
+| `RESEND_API_KEY` | Mode `api` / API mode | Do not commit to Git |
 
-NEXORA xác định SMTP sẵn sàng khi có `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME` và `SMTP_PASSWORD`. NEXORA xác định API sẵn sàng khi có `RESEND_API_KEY`. Ngoài ra, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` và `EMAIL_FROM_ADDRESS` cũng phải tồn tại.
+NEXORA determines SMTP ready when `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME` and `SMTP_PASSWORD` are present. NEXORA determines API availability when `RESEND_API_KEY` is present. Additionally, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and `EMAIL_FROM_ADDRESS` must also exist.
 
 NEXORA considers SMTP ready when `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME` and `SMTP_PASSWORD` are present. API mode is ready when `RESEND_API_KEY` is present. `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and `EMAIL_FROM_ADDRESS` are also required.
 
 :::caution
-**Cảnh báo / Warning:** Không đặt các biến server ở dạng `VITE_SMTP_PASSWORD`, `VITE_RESEND_API_KEY` hoặc bất kỳ biến `VITE_*` nào. Vite có thể đưa chúng vào bundle public.
+**Warning / Warning:** Do not set server variables of the form `VITE_SMTP_PASSWORD`, `VITE_RESEND_API_KEY` or any `VITE_*` variables. Vite can include them in the public bundle.
 :::
 
-## 5. Cấu hình SMTP / Configure SMTP
+## 5. Configure SMTP / Configure SMTP
 
-### 5.1 Thông số SMTP cơ bản / Basic SMTP parameters
+### 5.1 Basic SMTP parameters / Basic SMTP parameters
 
-Thông thường, port `465` dùng TLS ngay khi kết nối và backend NEXORA đặt `secure: true`. Port `587` thường bắt đầu bằng kết nối không mã hóa ở tầng TCP rồi nâng cấp qua STARTTLS; backend NEXORA đặt `secure: false` cho port này để Nodemailer xử lý STARTTLS theo cấu hình provider. Hãy ưu tiên thông số chính thức của nhà cung cấp.
+Normally, port `465` uses TLS upon connection and the NEXORA backend sets `secure: true`. Port `587` usually starts with an unencrypted connection at the TCP layer and then upgrades via STARTTLS; NEXORA backend sets `secure: false` for this port so that Nodemailer can handle STARTTLS according to the provider configuration. Please prioritize the supplier's official specifications.
 
 Typically, port `465` uses TLS immediately and NEXORA sets `secure: true`. Port `587` commonly starts with a plain TCP connection and upgrades through STARTTLS; NEXORA sets `secure: false` for that port so Nodemailer can negotiate STARTTLS according to the provider. Prefer your provider's official settings.
 
@@ -93,24 +93,24 @@ SMTP_USERNAME=no-reply@example.com
 SMTP_PASSWORD=replace-with-mailbox-password
 ```
 
-Trong Admin, chọn **transactional mode = SMTP**, bật **transactional email**, nhập sender name và public site URL production, sau đó bật từng template muốn sử dụng. Secret không được hiển thị lại sau khi lưu; nếu nghi ngờ lộ password, hãy đổi password ở provider và cập nhật secret server.
+In Admin, select **transactional mode = SMTP**, enable **transactional email**, enter sender name and public site production URL, then enable each template you want to use. Secrets are not displayed again after saving; If you suspect password leak, change the password at the provider and update the secret server.
 
-In the Admin, choose **transactional mode = SMTP**, enable **transactional email**, set the sender name and production public site URL, then enable only the templates you want. Secrets must not be displayed again after saving; if a password may have leaked, rotate it at the provider and update the server secret.
+In the Admin, choose **transactional mode = SMTP**, enable **transactional email**, set the sender name and produce public site URL, then enable only the templates you want. Secrets must not be displayed again after saving; If a password may have leaked, rotate it at the provider and update the server secret.
 
-### 5.2 Local development / Môi trường local
+### 5.2 Local development / Local environment
 
-Tạo file `.env` local nếu server của dự án đọc biến môi trường từ đó, nhưng không commit file này. Có thể dùng mailbox test hoặc provider sandbox. Để tránh gửi thật, giữ `transactional_enabled` tắt trong Admin cho đến khi kiểm tra xong.
+Create a local `.env` file if the project server reads environment variables from there, but do not commit this file. You can use mailbox test or provider sandbox. To avoid real submissions, keep `transactional_enabled` disabled in Admin until testing is complete.
 
 Create a local `.env` only if the project runtime loads environment files, and never commit it. Use a test mailbox or provider sandbox where possible. Keep `transactional_enabled` disabled in Admin until the configuration has been verified.
 
-Các bước local / Local steps:
+Local steps / Local steps:
 
-1. Cài dependency của dự án bằng `pnpm install`.
-2. Đặt server-only variables trong môi trường terminal hoặc `.env` không được commit.
-3. Chạy `pnpm dev`.
-4. Mở Command Deck và kiểm tra trạng thái email.
-5. Gửi thử tới mailbox của chính bạn sau khi bật đúng template.
-6. Xóa hoặc thu hồi credential test sau khi hoàn tất.
+1. Install project dependencies using `pnpm install`.
+2. Set server-only variables in the terminal environment or `.env` cannot be committed.
+3. Run `pnpm dev`.
+4. Open the Command Deck and check the email status.
+5. Test sending to your own mailbox after enabling the correct template.
+6. Delete or revoke test credential after completion.
 
 1. Install dependencies with `pnpm install`.
 2. Set server-only variables in the terminal environment or an ignored `.env` file.
@@ -119,9 +119,9 @@ Các bước local / Local steps:
 5. Send a test only to your own mailbox after enabling the intended template.
 6. Remove or revoke test credentials when finished.
 
-## 6. Cấu hình Resend API / Configure Resend API
+## 6. Configure Resend API / Configure Resend API
 
-Resend là lựa chọn API HTTPS thay cho SMTP. Tạo API key trong Resend Dashboard, xác minh sender domain, sau đó đặt key ở server. Không đặt key trong frontend.
+Resend is the HTTPS API alternative to SMTP. Create an API key in the Resend Dashboard, verify the sender domain, then place the key on the server. Do not place keys in the frontend.
 
 Resend is an HTTPS API option instead of SMTP. Create an API key in the Resend Dashboard, verify the sender domain, and store the key on the server. Never put the key in the frontend.
 
@@ -132,13 +132,13 @@ EMAIL_FROM_ADDRESS=NEXORA <no-reply@example.com>
 RESEND_API_KEY=re_replace-on-server-only
 ```
 
-Trong Admin, chọn **transactional mode = API**, bật email và template. Nếu API mode thiếu `RESEND_API_KEY`, backend sẽ báo channel chưa sẵn sàng và không gửi thật.
+In Admin, select **transactional mode = API**, enable email and templates. If API mode lacks `RESEND_API_KEY`, the backend will say the channel is not ready and will not actually send.
 
 In Admin, choose **transactional mode = API**, enable transactional email and the desired template. If API mode lacks `RESEND_API_KEY`, the backend reports that the channel is not ready and does not send real mail.
 
-## 7. Kiểm tra trạng thái và gửi thử / Check status and test
+## 7. Check status and send test / Check status and test
 
-Endpoint trạng thái không trả về secret, chỉ trả về cờ boolean như `smtpConfigured`, `apiConfigured`, `senderConfigured`, `databaseConfigured` và `serverReady`.
+Stateful endpoints do not return secrets, only boolean flags such as `smtpConfigured`, `apiConfigured`, `senderConfigured`, `databaseConfigured` and `serverReady`.
 
 The status endpoint never returns secrets; it only reports booleans such as `smtpConfigured`, `apiConfigured`, `senderConfigured`, `databaseConfigured` and `serverReady`.
 
@@ -146,7 +146,7 @@ The status endpoint never returns secrets; it only reports booleans such as `smt
 curl -s https://your-domain.example/api/transactional-emails/status
 ```
 
-Kết quả mong đợi khi dùng SMTP / Expected SMTP result:
+Expected result when using SMTP / Expected SMTP result:
 
 ```json
 {
@@ -158,55 +158,55 @@ Kết quả mong đợi khi dùng SMTP / Expected SMTP result:
 }
 ```
 
-`serverReady: true` chỉ có nghĩa backend đủ điều kiện kỹ thuật. Nó không xác nhận DNS đã propagate, mailbox đã nhận thư, template đã bật hoặc email chắc chắn vào inbox. Hãy kiểm tra mailbox, spam folder, provider logs và domain authentication.
+`serverReady: true` just means the backend is technically qualified. It does not confirm that DNS has propagated, mailbox has received mail, template has been enabled or email has definitely entered the inbox. Check your mailbox, spam folder, provider logs and domain authentication.
 
 `serverReady: true` means only that the backend has the required technical configuration. It does not prove DNS propagation, mailbox delivery, template enablement or inbox placement. Check the mailbox, spam folder, provider logs and domain authentication.
 
-## 8. Luồng email giao dịch của NEXORA / NEXORA transactional flow
+## 8. NEXORA transactional email flow / NEXORA transactional flow
 
-Khi trạng thái đơn hoặc yêu cầu hậu mãi tạo một queue item, worker/route giao dịch lấy template tương ứng, kiểm tra quyền và secret, render token rồi gửi qua mode đã chọn. Các token mẫu gồm `{customer_name}`, `{order_number}`, `{order_total}`, `{status}`, `{review_note}`, `{orders_url}` và `{store_name}`.
+When an order status or post-sale request creates a queue item, the transaction worker/route takes the corresponding template, checks permissions and secrets, renders the token, and sends it through the selected mode. Sample tokens include `{customer_name}`, `{order_number}`, `{order_total}`, `{status}`, `{review_note}`, `{orders_url}` and `{store_name}`.
 
 When an order or service-request status creates a queue item, the transactional route loads the matching template, checks permissions and secrets, renders tokens and sends through the selected mode. Supported sample tokens include `{customer_name}`, `{order_number}`, `{order_total}`, `{status}`, `{review_note}`, `{orders_url}` and `{store_name}`.
 
-| Sự kiện / Event | Ý nghĩa / Meaning |
+| Event / Event | Meaning / Meaning |
 |---|---|
-| `paid_cancellation_status` | Cập nhật yêu cầu hủy đơn đã thanh toán / Paid-order cancellation status update |
-| `return_status` | Cập nhật yêu cầu trả hàng / Return request status update |
-| `order_delivered` | Thông báo đơn đã giao / Delivered-order notification |
+| `paid_cancellation_status` | Update paid-order cancellation request / Paid-order cancellation status update |
+| `return_status` | Return request status update / Return request status update |
+| `order_delivered` | Delivered-order notification / Delivered-order notification |
 
-Email chỉ được dispatch sau khi backend xác thực quyền quản lý đơn hàng. Không gọi endpoint dispatch trực tiếp từ một trang public mà không có session/Authorization hợp lệ.
+Emails are only dispatched after the backend authenticates order management rights. Do not call the dispatch endpoint directly from a public page without a valid session/Authorization.
 
 Email is dispatched only after the backend verifies order-management permission. Do not call the dispatch endpoint from a public page without a valid session/Authorization header.
 
-## 9. Admin settings và mẫu email / Admin settings and templates
+## 9. Admin settings and email templates / Admin settings and templates
 
-Trong Command Deck, vào khu vực email giao dịch. Chọn mode, bật/tắt kênh, nhập sender name và public site URL. Sau đó mở từng template để chỉnh subject, preheader, heading, body, CTA label và footer. Dùng token đúng tên; token sai sẽ không được thay thế như mong muốn.
+In the Command Deck, go to the transactional email area. Select mode, turn channel on/off, enter sender name and public site URL. Then open each template to adjust the subject, preheader, heading, body, CTA label and footer. Use the correct token name; Wrong tokens will not be replaced as expected.
 
-In the Command Deck, open transactional email settings. Select a mode, enable or disable the channel, set sender name and public site URL. Then edit each template's subject, preheader, heading, body, CTA label and footer. Use the exact token names; misspelled tokens will not render as intended.
+In the Command Deck, open transactional email settings. Select a mode, enable or disable the channel, set sender name and public site URL. Then edit each template's subject, preheader, heading, body, CTA label and footer. Use the exact token names; missed tokens will not render as intended.
 
-Nên bắt đầu bằng nội dung ngắn, tiếng Việt rõ ràng và CTA dẫn tới `https://your-production-domain/orders.html`. Không đưa mật khẩu, số thẻ, service-role key hoặc dữ liệu nhạy cảm vào template. Chỉ hiển thị thông tin đơn cần thiết cho người nhận.
+Should start with short content, clear Vietnamese and CTA leading to `https://your-production-domain/orders.html`. Do not include passwords, card numbers, service-role keys or sensitive data in the template. Display only necessary application information to the recipient.
 
 Start with concise content, clear Vietnamese copy and a CTA pointing to `https://your-production-domain/orders.html`. Never place passwords, card numbers, service-role keys or sensitive credentials in a template. Show only the order information necessary for the recipient.
 
-## 10. Triển khai trên aaPanel / Deploy on aaPanel
+## 10. Deploy on aaPanel / Deploy on aaPanel
 
-Trên Ubuntu + aaPanel, tạo Node.js project trỏ tới thư mục đã build. Nếu dùng reverse proxy, domain phải trỏ tới aaPanel trước, SSL phải hoạt động và `public_site_url` trong Admin phải là domain HTTPS thật, không phải `localhost`.
+On Ubuntu + aaPanel, create a Node.js project pointing to the built directory. If using a reverse proxy, the domain must point to aaPanel first, SSL must be active, and the `public_site_url` in Admin must be a real HTTPS domain, not `localhost`.
 
 On Ubuntu + aaPanel, create a Node.js project pointing to the built application directory. If using a reverse proxy, point the domain to aaPanel first, enable SSL, and set `public_site_url` in Admin to the real HTTPS domain instead of `localhost`.
 
-Quy trình đề xuất / Recommended process:
+Recommended process / Recommended process:
 
-1. Clone repository từ GitHub bằng SSH/deploy key hoặc upload source qua aaPanel.
-2. Chạy `pnpm install --frozen-lockfile` trong thư mục project.
-3. Chạy `pnpm build`.
-4. Đặt biến server trong phần Environment Variables của Node project, không ghi vào frontend.
-5. Dùng startup entrypoint production mà project đang cấu hình; không hardcode port, vì aaPanel/Passenger hoặc reverse proxy có thể cấp port runtime.
-6. Trỏ domain và bật SSL.
-7. Kiểm tra `GET /api/transactional-emails/status`.
-8. Bật transactional email trong Admin và gửi thử tới mailbox kiểm thử.
-9. Kiểm tra log Node, provider logs và spam folder.
+1. Clone repository from GitHub using SSH/deploy key or upload source via aaPanel.
+2. Run `pnpm install --frozen-lockfile` in the project directory.
+3. Run `pnpm build`.
+4. Set server variables in the Environment Variables section of the Node project, do not write to the frontend.
+5. Use the startup entrypoint production that the project is configuring; Do not hardcode the port, because aaPanel/Passenger or reverse proxy can provide the runtime port.
+6. Point the domain and enable SSL.
+7. Check `GET /api/transactional-emails/status`.
+8. Turn on transactional email in Admin and send it to the test mailbox.
+9. Check Node logs, provider logs and spam folder.
 
-1. Clone the GitHub repository using an SSH/deploy key or upload the source through aaPanel.
+1. Clone the GitHub repository using an SSH/deploy key or upload the source via aaPanel.
 2. Run `pnpm install --frozen-lockfile` in the project directory.
 3. Run `pnpm build`.
 4. Set server variables in the Node project's Environment Variables section, never in frontend code.
@@ -216,114 +216,114 @@ Quy trình đề xuất / Recommended process:
 8. Enable transactional email in Admin and send a test to a test mailbox.
 9. Check Node logs, provider logs and the spam folder.
 
-## 11. Triển khai trên cPanel / Deploy on cPanel
+## 11. Deploy on cPanel / Deploy on cPanel
 
-Nếu hosting cPanel hỗ trợ **Application Manager / Setup Node.js App**, tạo Node application với application root, Node version, startup file và environment variables theo thông tin hosting cung cấp. Nhiều gói shared hosting chỉ phục vụ static files và không chạy được Express route; khi đó SMTP backend của NEXORA không thể chạy chỉ bằng việc upload HTML.
+If cPanel hosting supports **Application Manager / Setup Node.js App**, create a Node application with application root, Node version, startup file and environment variables according to the information provided by the hosting. Many shared hosting packages only serve static files and cannot run Express routes; NEXORA's SMTP backend cannot run just by uploading HTML.
 
-If cPanel provides **Application Manager / Setup Node.js App**, create a Node application with the application root, Node version, startup file and environment variables required by the host. Many shared-hosting plans serve only static files and cannot run Express routes; in that case, uploading HTML alone cannot run NEXORA's SMTP backend.
+If cPanel provides **Application Manager / Setup Node.js App**, create a Node application with the application root, Node version, startup file and environment variables required by the host. Many shared-hosting plans serve only static files and cannot run Express routes; In that case, uploading HTML alone cannot run NEXORA's SMTP backend.
 
 Checklist cPanel / cPanel checklist:
 
-| Trường / Field | Giá trị cần kiểm tra / What to verify |
+| Field / Field | Value to check / What to verify |
 |---|---|
-| Application root | Thư mục chứa `package.json` và source build |
-| Startup file | Entrypoint production được project/hosting yêu cầu |
-| Node version | Phiên bản tương thích với `package.json` |
-| Environment | Đặt toàn bộ server-only variables |
-| Application URL | Domain HTTPS đã bind |
-| Restart | Restart app sau khi đổi environment |
-| Logs | Passenger/Node error log và access log |
+| Application root | The directory contains `package.json` and source build |
+| Startup file | Entrypoint production required by project/hosting |
+| Node version | Version compatible with `package.json` |
+| Environment | Set all server-only variables |
+| Application URL | Binded HTTPS domain |
+| Restart | Restart app after changing environment |
+| Logs | Passenger/Node error log and access log |
 
-Sau khi khởi động, kiểm tra route status và thử một email. Nếu cPanel chỉ hỗ trợ PHP/static, hãy giữ storefront gọi Supabase trực tiếp nhưng chạy transactional email trên một Node host riêng; không chuyển SMTP password vào JavaScript để “né” giới hạn hosting.
+After booting, check route status and try an email. If cPanel only supports PHP/static, keep the storefront calling Supabase directly but run transactional email on a separate Node host; Do not pass the SMTP password into JavaScript to "avoid" hosting limits.
 
-After startup, check the status route and send one test email. If cPanel supports only PHP/static hosting, keep the storefront calling Supabase directly but run transactional email on a separate Node host; never move the SMTP password into JavaScript to work around the hosting limitation.
+After startup, check the route status and send a test email. If cPanel supports only PHP/static hosting, keep the storefront calling Supabase directly but run transactional email on a separate Node host; never move the SMTP password into JavaScript to work around the hosting limitation.
 
-## 12. Supabase Auth và reset password / Supabase Auth and password reset
+## 12. Supabase Auth and password reset / Supabase Auth and password reset
 
-Để reset password hoạt động, vào Supabase **Authentication → URL Configuration**, đặt Site URL production và thêm Redirect URLs cho local, preview và production. Frontend phải dùng URL production đúng, không để link reset trỏ về `localhost` khi gửi cho khách thật.
+To make password reset work, go to Supabase **Authentication → URL Configuration**, set Site URL production and add Redirect URLs for local, preview and production. Frontend must use the correct production URL, do not let the reset link point to `localhost` when sending to real customers.
 
 For password reset, open Supabase **Authentication → URL Configuration**, set the production Site URL and add Redirect URLs for local, preview and production. The frontend must use the correct production URL; do not send customer reset links pointing to `localhost`.
 
-SMTP custom trong Supabase Auth là cấu hình riêng với transactional email NEXORA. Nếu muốn email reset password của Auth đi qua domain riêng, hãy cấu hình custom SMTP trong Supabase Dashboard theo giới hạn và hướng dẫn của Supabase; không dùng `SMTP_PASSWORD` của backend NEXORA nếu bạn chưa chủ động muốn chia sẻ cùng mailbox.
+SMTP custom in Supabase Auth is a separate configuration with transactional email NEXORA. If you want the Auth password reset email to go through your own domain, configure custom SMTP in Supabase Dashboard according to Supabase's limits and instructions; Do not use `SMTP_PASSWORD` of the NEXORA backend if you do not actively want to share with the same mailbox.
 
 Supabase Auth custom SMTP is separate from NEXORA transactional email. If Auth password-reset messages should use your own domain, configure Supabase custom SMTP in the Supabase Dashboard according to Supabase's limits and guidance; do not reuse NEXORA's `SMTP_PASSWORD` unless you intentionally want to share the same mailbox.
 
-## 13. Bảo mật production / Production security
+## 13. Production security / Production security
 
-| Quy tắc / Rule | Hành động / Action |
+| Rules / Rule | Action / Action |
 |---|---|
-| Secret scope | Chỉ lưu ở server environment hoặc secret manager |
-| Git history | Nếu lộ key, revoke/rotate ngay; xóa khỏi file chưa đủ vì Git history vẫn còn |
-| Sender domain | Xác minh SPF, DKIM và chính sách DMARC phù hợp |
-| TLS | Ưu tiên port/provider có TLS; không tắt certificate verification |
-| Least privilege | API key chỉ có quyền gửi email nếu provider hỗ trợ |
-| Logs | Không log SMTP password, API key, full Authorization header hoặc nội dung nhạy cảm |
-| Test | Chỉ gửi test tới mailbox được phép; bật production sau khi review |
-| Queue | Theo dõi `queued`, `sent`, `failed`, `skipped` và retry có kiểm soát |
+| Secret scope | Only save in server environment or secret manager |
+| Git history | If the key is revealed, revoke/rotate immediately; Deleting from the file is not enough because Git history still remains |
+| Sender domains | Verify appropriate SPF, DKIM, and DMARC policies |
+| TLS | Prioritize port/provider with TLS; Do not turn off certificate verification |
+| Least privilege | The API key only has permission to send emails if the provider supports |
+| Logs | Do not log SMTP passwords, API keys, full Authorization headers or sensitive content |
+| Test | Only send tests to authorized mailboxes; turn on production after review |
+| Queue | Monitor `queued`, `sent`, `failed`, `skipped` and controlled retries |
 
 Do not paste secrets into chat, screenshots, issue trackers or public GitHub. If a key has been exposed, revoke it at the provider, issue a replacement and restart the server with the new secret.
 
-## 14. Xử lý lỗi / Troubleshooting
+## 14. Error handling / Troubleshooting
 
 ### `serverReady: false`
 
-Kiểm tra lần lượt `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `EMAIL_FROM_ADDRESS` và các biến của mode đang chọn. Đảm bảo bạn restart Node application sau khi đổi environment.
+Check `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `EMAIL_FROM_ADDRESS` and the variables of the selected mode. Make sure you restart your Node application after changing the environment.
 
 Check `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `EMAIL_FROM_ADDRESS` and the variables for the selected mode. Restart the Node application after changing environment variables.
 
-### SMTP timeout hoặc connection refused
+### SMTP timeout or connection refused
 
-Kiểm tra `SMTP_HOST`, port, firewall outbound, TLS mode, username và password. Port 465/587 không phải lúc nào cũng được hosting mở; hỏi nhà cung cấp hosting nếu connection bị chặn.
+Check `SMTP_HOST`, port, outbound firewall, TLS mode, username and password. Port 465/587 is not always open by hosting; Ask your hosting provider if the connection is blocked.
 
 Check `SMTP_HOST`, port, outbound firewall, TLS mode, username and password. Hosting providers do not always allow ports 465/587; contact the host if the connection is blocked.
 
 ### `535 Authentication failed`
 
-Mailbox password có thể sai, provider yêu cầu app password, hoặc tài khoản chưa bật SMTP submission. Tạo app password theo provider nếu được yêu cầu; không dùng mật khẩu tài khoản chính nếu provider khuyến nghị app password.
+The mailbox password may be wrong, the provider requires an app password, or the account may not have SMTP submission enabled. Create app password according to provider if required; Do not use the main account password if the provider recommends an app password.
 
 The mailbox password may be wrong, the provider may require an app password, or SMTP submission may be disabled. Create an app password when required; do not use the primary account password when the provider recommends an app password.
 
-### Email vào spam hoặc bị từ chối
+### Email goes to spam or is rejected
 
-Kiểm tra sender domain, SPF, DKIM, DMARC, `EMAIL_FROM_ADDRESS`, reverse DNS nếu provider yêu cầu và provider delivery logs. Không cố giải quyết bằng cách đổi ngẫu nhiên subject hoặc gửi lặp nhiều lần.
+Check sender domain, SPF, DKIM, DMARC, `EMAIL_FROM_ADDRESS`, reverse DNS if required by provider and provider delivery logs. Don't try to solve it by randomly changing the subject or sending multiple times.
 
 Check sender domain, SPF, DKIM, DMARC, `EMAIL_FROM_ADDRESS`, reverse DNS if required and provider delivery logs. Do not try to fix deliverability by randomly changing subjects or repeatedly resending.
 
-### Link email trỏ về localhost
+### Email link points to localhost
 
-Sửa `public_site_url` trong `email_delivery_settings` bằng domain HTTPS production. Đồng thời sửa Supabase Site URL/Redirect URLs và kiểm tra biến môi trường frontend/backend đang trỏ đúng origin.
+Edit `public_site_url` in `email_delivery_settings` with HTTPS production domain. Also edit Supabase Site URL/Redirect URLs and check the frontend/backend environment variables are pointing to the correct origin.
 
-Set `public_site_url` in `email_delivery_settings` to the production HTTPS domain. Also update Supabase Site URL/Redirect URLs and verify that frontend/backend environment values point to the correct origin.
+Set `public_site_url` in `email_delivery_settings` to the production HTTPS domain. Also update Supabase Site URL/Redirect URLs and verify that frontend/backend environment values ​​point to the correct origin.
 
-### Template không gửi dù SMTP đã cấu hình
+### Template does not send even though SMTP is configured
 
-Kiểm tra `transactional_enabled`, `is_enabled` của template, event type, queue status và quyền dispatch. Trạng thái `skipped` thường có nghĩa hệ thống chủ động không gửi vì điều kiện an toàn chưa đủ.
+Check the template's `transactional_enabled`, `is_enabled`, event type, queue status and dispatch permissions. The `skipped` state usually means that the system is actively not sending because the safety conditions are not sufficient.
 
 Check `transactional_enabled`, the template's `is_enabled`, event type, queue status and dispatch permission. A `skipped` status usually means the system intentionally did not send because a safety condition was not met.
 
-## 15. Checklist trước production / Pre-production checklist
+## 15. Pre-production checklist / Pre-production checklist
 
-- [ ] Domain sender đã xác minh / Sender domain verified.
-- [ ] SPF và DKIM đã được provider xác nhận / SPF and DKIM verified by the provider.
-- [ ] Site URL và Redirect URLs không còn `localhost` cho production / Production URLs no longer contain `localhost`.
-- [ ] Server-only secrets không nằm trong Git / Server-only secrets are not in Git.
-- [ ] `serverReady` trả về `true` trong đúng mode / `serverReady` is `true` for the selected mode.
-- [ ] Template đã review nội dung, token và ngôn ngữ / Templates reviewed for content, tokens and language.
-- [ ] Test mailbox nhận được email / Test mailbox received the message.
-- [ ] Provider logs không báo lỗi / Provider logs show no delivery errors.
-- [ ] Email queue và audit log được theo dõi / Email queue and audit logs are monitored.
-- [ ] Có kế hoạch rotate secret / A secret-rotation plan exists.
+- [ ] Sender domain verified / Sender domain verified.
+- [ ] SPF and DKIM verified by the provider / SPF and DKIM verified by the provider.
+- [ ] Site URL and Redirect URLs no longer contain `localhost` for production / Production URLs no longer contain `localhost`.
+- [ ] Server-only secrets are not in Git / Server-only secrets are not in Git.
+- [ ] `serverReady` returns `true` in the correct mode / `serverReady` is `true` for the selected mode.
+- [ ] Template reviewed for content, tokens and language / Templates reviewed for content, tokens and language.
+- [ ] Test mailbox received the email / Test mailbox received the message.
+- [ ] Provider logs show no errors / Provider logs show no delivery errors.
+- [ ] Email queue and audit logs are monitored / Email queue and audit logs are monitored.
+- [ ] A secret-rotation plan exists.
 
-## 16. Fix lỗi nguy hiểm
+## 16. Fix dangerous errors
 
-### Lỗi bị đẩy về localhost
+### Error pushed to localhost
 
-Đây là lỗi khi supabase chưa update được miền thật của website, để fix phải vào Authentication -> URL Configuration và thay Site URL thành domain của bạn
+This is an error when supabase has not updated the real domain of the website. To fix it, you must go to Authentication -> URL Configuration and change Site URL to your domain.
 
 This error occurs when Supabase has not yet updated the website's actual domain; to fix it, go to Authentication -> URL Configuration and change the Site URL to your domain.
 
 
-## 16. Tài liệu tham khảo / References
+## 16. References / References
 
 [1]: https://nodemailer.com/ Nodemailer Documentation — SMTP transport and mail sending.
 [2]: https://resend.com/docs Resend Documentation — API email sending and domain setup.
@@ -332,6 +332,6 @@ This error occurs when Supabase has not yet updated the website's actual domain;
 [5]: https://docs.cpanel.net/knowledge-base/web-services/how-to-install-a-node.js-application/ cPanel — How to install a Node.js application.
 [6]: https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site GitHub Pages — static hosting limitations and setup.
 
-**Tác giả / Author:** Minhduc290613
-**Dự án / Project:** NEXORA Tech Store  
-**Cập nhật / Updated:** 2026-08-29
+**Author / Author:** Minhduc290613
+**Project / Project:** NEXORA Tech Store  
+**Updated / Updated:** 2026-08-29

@@ -1,0 +1,13 @@
+name = "nexora-ask-ai"
+main = "worker.mjs"
+compatibility_date = "2026-01-01"
+
+[vars]
+# Domain site docs của bạn (bắt buộc đặt khi chạy thật, vd. https://docs.example.com)
+ALLOWED_ORIGIN = "*"
+# ANTHROPIC_MODEL = "claude-sonnet-5-5"
+# GEMINI_MODEL = "gemini-2.5-flash"
+# AI_PROVIDER = "claude"      # model mặc định khi người dùng chưa chọn
+# Khoá API đặt bằng (một hoặc cả hai):
+#   wrangler secret put ANTHROPIC_API_KEY
+#   wrangler secret put GEMINI_API_KEY

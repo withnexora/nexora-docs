@@ -1,19 +1,12 @@
----
-title: "Deployment & user guide (tiếng Anh)"
-description: "Bản hướng dẫn triển khai và sử dụng bằng tiếng Anh: local, Supabase, hosting, role, thanh toán, email."
----
+# NEXORA Tech Store — Deployment and User Guide
 
-:::note
-**Document version:** 2026-08-29. This guide matches the current NEXORA source tree. It covers local development, GitHub, static hosting, aaPanel, cPanel, Supabase, payments, email, administration, customer usage, troubleshooting, and security.
-:::
+> **Document version:** 2026-08-29. This guide matches the current NEXORA source tree. It covers local development, GitHub, static hosting, aaPanel, cPanel, Supabase, payments, email, administration, customer usage, troubleshooting, and security.
 
 ## 1. What is NEXORA?
 
 NEXORA is a dark-mode technology e-commerce platform with a public storefront and a protected **NEXORA Command Deck**. The frontend uses HTML5, CSS3, Vanilla JavaScript ES Modules, Font Awesome CDN, and Vite. Supabase provides Authentication, PostgreSQL, Row Level Security, Storage, and database RPCs. The Node.js/Express server serves the production build and supports backend routes such as tRPC, payment webhooks, storage proxy, and transactional email.
 
-:::caution
-**Security rule:** A publishable key or legacy anon key may appear in browser code, but Supabase secret/service-role keys, JWT secrets, SMTP passwords, payment provider secrets, webhook signing secrets, real payment details, and customer exports must never be committed to GitHub or exposed to the browser. Supabase describes publishable keys as public-component keys and recommends protecting the data layer with Auth and RLS [1].
-:::
+> **Security rule:** A publishable key or legacy anon key may appear in browser code, but Supabase secret/service-role keys, JWT secrets, SMTP passwords, payment provider secrets, webhook signing secrets, real payment details, and customer exports must never be committed to GitHub or exposed to the browser. Supabase describes publishable keys as public-component keys and recommends protecting the data layer with Auth and RLS [1].
 
 ## 2. Main pages and features
 
@@ -47,7 +40,7 @@ GitHub Pages, Netlify, Vercel static, Cloudflare Pages, and cPanel static hostin
 ### 4.1 Clone and install
 
 ```bash
-git clone https://github.com/withnexora/nexora.git
+git clone https://github.com/minhduc290613/tech-ecommerce-store.git
 cd tech-ecommerce-store
 pnpm install
 ```

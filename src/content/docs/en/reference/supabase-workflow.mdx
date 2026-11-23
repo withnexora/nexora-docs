@@ -1,0 +1,72 @@
+---
+title: "Supabase workflow"
+description: "Canonical 25-table schema, RLS, one-time apply flow, verification, checkout and safe admin grants."
+---
+
+## Goal
+
+NEXORA uses a single canonical schema: [`supabase-unified.sql`](https://github.com/minhduc290613/tech-ecommerce-store/blob/main/supabase-unified.sql). It covers the catalog, orders, RLS, Command Deck, Account Center, CMS/Zalo, technical specifications, sale hunting, roles, moderation, articles, 15% affiliate, refunds, checkout RPC, the brand-assets bucket and seed data.
+
+:::note
+The repository keeps only `supabase-unified.sql`; there are no separate SQL migrations to run in sequence.
+:::
+
+## Applying after connecting
+
+| Step | Action | Expected result |
+| --- | --- | --- |
+| 1 | Create/connect an empty Supabase project. | The project is active. |
+| 2 | Apply the whole `supabase-unified.sql` as **one DDL migration**. | Creates the schema, functions/RPCs, indexes, RLS policies, Account Center, email/domain metadata without secrets, roles/capabilities, moderation/affiliate/refund and seed data. |
+| 3 | Enable Email/Password in Authentication. | The storefront can register and sign in users. |
+| 4 | Copy the Project URL and anon/publishable key into `client/supabase-config.js`. | The storefront and `/admin.html` use the same project. |
+| 5 | Create a user, then grant access in `admin_users`. | The user can open the Command Deck. |
+
+### Manual apply
+
+Open **Supabase Dashboard → SQL Editor**, paste the full contents of [`supabase-unified.sql`](https://github.com/minhduc290613/tech-ecommerce-store/blob/main/supabase-unified.sql), and run it once on a new/empty project.
+
+### Managed apply
+
+When the Supabase project is connected to a managed environment, the canonical schema can be applied automatically as the `nexora_unified_schema` migration. On the connected `shopdatabase` project for NEXORA, this schema plus the two following hardening migrations (`nexora_security_hardening`, `nexora_revoke_anon_rpc`) were applied successfully during this normalization. For a new project, the current unified file already includes these hardenings, so you only need to run **one file**.
+
+Running the schema is a DDL change: **do not re-run it casually on a production database that has data**. Back up, review existing migrations and prepare a dedicated upgrade migration if production differs from the canonical schema.
+
+The current canonical schema includes the affiliate-rate RPC, moderation Realtime, roles/capabilities and the public `nexora-brand-assets` bucket. Only roles with the `siteSettings` capability can upload into the `branding/` folder; the storefront only receives image URLs after an admin saves the Branding form. The Command Deck also shows role assign/save/delete audits, can limit ledger/top-up CSV exports by date range and manages optional English versions of the FAQ and hero/announcement content. For a running project, apply the difference via a managed DDL migration, not a standalone SQL file in the repository.
+
+### Account and delivery sync
+
+`handle_auth_user_created` is a trigger that runs after a user registers in `auth.users`. It creates or updates `customer_profiles`, `wallet_accounts` and `user_roles` with the `customer` role, so new accounts appear immediately under **Accounts & balances** in the Command Deck. If an older project lacked the trigger, backfill the tables above from `auth.users` once; do not change balances or payment status during that operation.
+
+Automatic bank transfer additionally uses `orders.auto_transfer_provider`, `orders.auto_transfer_reference` and `payment_webhook_events`. The `select_auto_transfer_payment` RPC lets a customer move a pending-payment order only to a method an admin has enabled. The server-only RPC `process_auto_transfer_webhook` locks on the provider transaction code, matches the order code/amount exactly and only then updates to `paid`. The `guard_auto_transfer_paid_transition` trigger prevents signed-in users/admins from moving automatic-transfer orders to `paid` themselves; only the server-side service role may call the reconciliation RPC after the signed webhook has been verified.
+
+Shipping uses `shipping_carriers`, the shipment columns on `orders` and `order_shipment_events`. The `inventory_staff` role has the `logistics` capability; moderators and admins have it too. Only these roles can create carriers or update tracking. The `request_order_payment_confirmation` RPC only records that the customer asked to be contacted on Zalo for a `pending_payment` order; it does **not** mark the order as paid.
+
+## Verification after applying
+
+| Table/module | Expected seed rows |
+| --- | ---: |
+| `products` | 6 |
+| `sale_campaigns` | 2 |
+| `site_settings` | 1 |
+| `site_pages` | 6 |
+| `faqs` | 3 |
+| `shops` | 3 |
+| `admin_users`, `orders`, `order_items`, `user_roles`, moderation, affiliate, refund | 0 |
+
+All **25 public tables** must have RLS enabled. Seed rows exist only to help testing; replace prices, stock, images, specifications and legal content with real operating data before selling. The seed catalog is linked via `products.shop_id` to the three starter shops; admins can change the mapping in the product form. See [Account & Wallet](/en/reference/account-wallet/) for balances, Zalo top-ups and the audit log, and [Role, Content & Affiliate](/en/reference/role-content-affiliate/) for permissions and moderation.
+
+## Checkout control
+
+`create_order_with_sale` is a `SECURITY DEFINER` RPC that checks `auth.uid()` inside the transaction to lock price, stock and campaign quota in the database. Execute permission is **revoked from the `anon` role** and granted only to `authenticated`; the post-hardening check confirmed `anon_can_execute = false` and `authenticated_can_execute = true`.
+
+## Granting admin safely
+
+After the user registers, run the statement below separately in the SQL Editor, replacing the sample email with the administrator's email.
+
+```sql
+insert into public.admin_users (user_id)
+select id from auth.users where email = 'admin@yourdomain.com'
+on conflict (user_id) do nothing;
+```
+
+Never add a fixed admin password, SMTP password/API key, `service_role key`, real payment account number or other secrets to GitHub or the frontend. For custom SMTP to work, configure secrets in the Supabase Dashboard/Edge Function and set **Site URL/Redirect URLs** as described in the [deployment guide](/en/reference/full-guide/).

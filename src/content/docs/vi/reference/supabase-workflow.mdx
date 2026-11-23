@@ -5,7 +5,7 @@ description: "Schema canonical 25 bảng, RLS, quy trình áp dụng một lần
 
 ## Mục tiêu
 
-NEXORA sử dụng một schema canonical duy nhất: [`supabase-unified.sql`](https://github.com/withnexora/nexora/blob/main/supabase-unified.sql). File này bao gồm catalog, đơn hàng, RLS, Command Deck, Account Center, CMS/Zalo, thông số kỹ thuật, săn sale, role, moderation, bài viết, affiliate 15%, hoàn tiền, RPC checkout, bucket ảnh thương hiệu và dữ liệu khởi tạo.
+NEXORA sử dụng một schema canonical duy nhất: [`supabase-unified.sql`](https://github.com/minhduc290613/tech-ecommerce-store/blob/main/supabase-unified.sql). File này bao gồm catalog, đơn hàng, RLS, Command Deck, Account Center, CMS/Zalo, thông số kỹ thuật, săn sale, role, moderation, bài viết, affiliate 15%, hoàn tiền, RPC checkout, bucket ảnh thương hiệu và dữ liệu khởi tạo.
 
 :::note
 Repository chỉ giữ `supabase-unified.sql`; không có migration SQL rời để chạy lần lượt.
@@ -23,7 +23,7 @@ Repository chỉ giữ `supabase-unified.sql`; không có migration SQL rời đ
 
 ### Cách áp dụng thủ công
 
-Mở **Supabase Dashboard → SQL Editor**, dán toàn bộ nội dung [`supabase-unified.sql`](https://github.com/withnexora/nexora/blob/main/supabase-unified.sql), sau đó chạy một lần trên project mới/trống.
+Mở **Supabase Dashboard → SQL Editor**, dán toàn bộ nội dung [`supabase-unified.sql`](https://github.com/minhduc290613/tech-ecommerce-store/blob/main/supabase-unified.sql), sau đó chạy một lần trên project mới/trống.
 
 ### Áp dụng có quản lý
 
@@ -69,4 +69,4 @@ select id from auth.users where email = 'admin@yourdomain.com'
 on conflict (user_id) do nothing;
 ```
 
-Không thêm mật khẩu admin cố định, mật khẩu SMTP/API key, `service_role key`, số tài khoản thanh toán thật hoặc bí mật khác vào GitHub/frontend. Để custom SMTP hoạt động, cấu hình secret trong Supabase Dashboard/Edge Function và đặt **Site URL/Redirect URLs** theo [Hướng dẫn A–Z](/vi/reference/guide-a-z/#54-khắc-phục-link-email-trỏ-về-localhost).
+Không thêm mật khẩu admin cố định, mật khẩu SMTP/API key, `service_role key`, số tài khoản thanh toán thật hoặc bí mật khác vào GitHub/frontend. Để custom SMTP hoạt động, cấu hình secret trong Supabase Dashboard/Edge Function và đặt **Site URL/Redirect URLs** theo [Hướng dẫn A–Z](/vi/reference/full-guide/#54-khắc-phục-link-email-trỏ-về-localhost).

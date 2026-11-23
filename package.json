@@ -8,7 +8,8 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "ask-ai": "node ask-ai/server.mjs"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.42.10",
